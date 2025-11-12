@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1021004998637",
+    "project_id": "otolink-3af12",
+    "storage_bucket": "otolink-3af12.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1021004998637:android:71b6bb822ebc1e15e469e4",
+        "android_client_info": {
+          "package_name": "com.example.otolink"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwGy_ueMHPPVFaeri1rL-wirz-OO-6T_U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
