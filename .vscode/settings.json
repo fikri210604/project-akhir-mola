@@ -1,0 +1,5 @@
+{
+  // Disable Java extension Gradle import for this workspace to avoid bogus init.gradle path errors
+  "java.import.gradle.enabled": false
+}
+
