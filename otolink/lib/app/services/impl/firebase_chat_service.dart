@@ -52,17 +52,20 @@ class FirebaseChatService implements ChatService {
   @override
   Future<List<ChatThread>> listThreads(String userId) async {
     final q = await _threads.where('participantIds', arrayContains: userId).get();
-    
     final threads = q.docs.map(_threadFromDoc).toList();
     threads.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    
     return threads;
   }
 
   @override
-  Future<List<Message>> listMessages(String threadId) async {
-    final q = await _threads.doc(threadId).collection('messages').orderBy('timestamp').get();
-    return q.docs.map((d) => _messageFromDoc(d, threadId)).toList();
+  Stream<List<Message>> messagesStream(String threadId) {
+    return _threads.doc(threadId).collection('messages').snapshots().map((q) {
+      final msgs = q.docs.map((d) => _messageFromDoc(d, threadId)).toList();
+      // Sort message terbaru di paling bawah (ascending) atau paling atas (descending)
+      // Kita pakai Descending (terbaru di index 0) untuk ListView(reverse: true)
+      msgs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return msgs;
+    });
   }
 
   @override
@@ -99,7 +102,7 @@ class FirebaseChatService implements ChatService {
     batch.set(msgRef, msgData);
     batch.update(_threads.doc(threadId), {
       'updatedAt': FieldValue.serverTimestamp(),
-      'lastMessage': msgData, 
+      'lastMessage': msgData,
     });
 
     await batch.commit();

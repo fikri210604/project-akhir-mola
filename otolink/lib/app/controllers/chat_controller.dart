@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -14,15 +15,19 @@ class ChatController extends GetxController {
 
   final RxList<ChatThread> threadList = <ChatThread>[].obs;
   final RxList<Message> messageList = <Message>[].obs;
-  final RxBool isLoading = false.obs;
+  
+  final RxBool isLoading = false.obs; 
+  final RxBool isMessagesLoading = true.obs; 
   final RxBool isSending = false.obs;
   
   final TextEditingController messageController = TextEditingController();
   
   String? _currentThreadId;
+  StreamSubscription? _msgSub;
 
   @override
   void onClose() {
+    _msgSub?.cancel();
     messageController.dispose();
     super.onClose();
   }
@@ -35,25 +40,28 @@ class ChatController extends GetxController {
     try {
       final res = await _service.listThreads(user.id);
       threadList.assignAll(res);
-    } catch (e) {
-      print('Error loading threads: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> initChat(String threadId) async {
+  void initChat(String threadId) {
+    if (_currentThreadId == threadId) return;
+
     _currentThreadId = threadId;
     messageList.clear();
-    isLoading.value = true;
-    try {
-      final res = await _service.listMessages(threadId);
-      messageList.assignAll(res);
-    } catch (e) {
-      print('Error loading messages: $e');
-    } finally {
-      isLoading.value = false;
-    }
+    isMessagesLoading.value = true;
+    
+    _msgSub?.cancel();
+    _msgSub = _service.messagesStream(threadId).listen((msgs) {
+      Future.delayed(Duration.zero, () {
+        if (isClosed) return;
+        messageList.assignAll(msgs);
+        isMessagesLoading.value = false;
+      });
+    }, onError: (e) {
+      isMessagesLoading.value = false;
+    });
   }
 
   Future<void> sendMessage() async {
@@ -63,35 +71,15 @@ class ChatController extends GetxController {
     final user = _authService.currentUser;
     if (user == null) return;
 
-    isSending.value = true;
+    messageController.clear();
     try {
-      final tempMsg = Message(
-        id: 'temp_${DateTime.now().millisecondsSinceEpoch}', 
-        threadId: _currentThreadId!, 
-        senderId: user.id, 
-        text: text, 
-        timestamp: DateTime.now()
-      );
-      
-      messageList.add(tempMsg);
-      messageController.clear();
-
-      final newMessage = await _service.sendMessage(
+      await _service.sendMessage(
         threadId: _currentThreadId!, 
         senderId: user.id, 
         text: text
       );
-
-      final index = messageList.indexWhere((m) => m.id == tempMsg.id);
-      if (index != -1) {
-        messageList[index] = newMessage;
-      } else {
-        messageList.add(newMessage);
-      }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal mengirim pesan: $e');
-    } finally {
-      isSending.value = false;
+      Get.snackbar('Error', 'Gagal mengirim pesan');
     }
   }
 

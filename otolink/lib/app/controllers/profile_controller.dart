@@ -1,16 +1,16 @@
 import 'package:get/get.dart';
-import '../services/auth_service.dart';
 import '../routes/routes.dart';
-import 'base_controller.dart';
+import '../services/auth_service.dart';
 
-class ProfileController extends BaseController {
+class ProfileController extends GetxController {
   final AuthService _authService;
   
   ProfileController(this._authService);
-
-  final userName = ''.obs;
-  final userEmail = ''.obs;
-  final userPhoto = ''.obs;
+  
+  final RxBool isLoading = false.obs;
+  final RxString userName = 'Pengguna'.obs;
+  final RxString userEmail = 'guest@otolink.com'.obs;
+  final RxString userInitial = 'P'.obs;
 
   @override
   void onInit() {
@@ -19,20 +19,31 @@ class ProfileController extends BaseController {
   }
 
   void loadUser() {
-    final user = _authService.currentUser;
-    if (user != null) {
-      userName.value = user.displayName;
-      userEmail.value = user.email ?? 'Tidak ada email';
-      userPhoto.value = user.photoUrl ?? '';
-    } else {
-      userName.value = 'Tamu';
-      userEmail.value = '';
-      userPhoto.value = '';
+    isLoading.value = true;
+    try {
+      final user = _authService.currentUser;
+      if (user != null) {
+        userName.value = user.displayName ?? 'Tanpa Nama';
+        userEmail.value = 'user_${user.id.substring(0, 5)}@otolink.com'; 
+        
+        if (userName.value.isNotEmpty) {
+          userInitial.value = userName.value[0].toUpperCase();
+        }
+      }
+    } finally {
+      isLoading.value = false;
     }
   }
 
   Future<void> logout() async {
-    await runAsync(() => _authService.signOut());
-    Get.offAllNamed(AppRoutes.welcome);
+    isLoading.value = true;
+    try {
+      await _authService.signOut();
+      Get.offAllNamed(AppRoutes.welcome);
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal logout: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

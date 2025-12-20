@@ -5,6 +5,7 @@ import '../../ui/views/auth/signup_flow_view.dart';
 import '../../ui/views/home/welcome_page.dart';
 import '../../ui/views/products/product_detail_view.dart';
 import '../../ui/views/chat/chat_room_view.dart';
+import '../../ui/views/favorites/favorite_list_view.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String chat = '/chat';
   static const String chatRoom = '/chat_room';
   static const String welcome = '/welcome';
+  static const String favorites = '/favorites';
 
   static final List<GetPage<dynamic>> pages = [
     GetPage(name: welcome, page: () => const WelcomePage()),
@@ -23,5 +25,6 @@ class AppRoutes {
     GetPage(name: product, page: () => const ProductDetailView()),
     GetPage(name: chat, page: () => const ChatRoomView()),
     GetPage(name: chatRoom, page: () => const ChatRoomView()),
+    GetPage(name: favorites, page: () => const FavoriteListView()),
   ];
 }

@@ -28,46 +28,56 @@ class _ChatRoomViewState extends State<ChatRoomView> {
     final myId = authController.currentUser.value?.id ?? '';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
+      appBar: AppBar(
+        title: const Text('Chat'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.5,
+      ),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           Expanded(
             child: Obx(() {
-              if (controller.isLoading.value) {
+              // Jika loading dan belum ada data
+              if (controller.isLoading.value && controller.messageList.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
               }
 
               final msgs = controller.messageList;
               if (msgs.isEmpty) {
-                return const Center(child: Text('Belum ada pesan'));
+                return const Center(child: Text('Mulai percakapan...'));
               }
 
-              final reversedMsgs = msgs.toList().reversed.toList();
-
               return ListView.builder(
-                reverse: true, 
-                itemCount: reversedMsgs.length,
+                reverse: true, // Data sudah disort Descending, jadi reverse: true benar
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                itemCount: msgs.length,
                 itemBuilder: (context, index) {
-                  final msg = reversedMsgs[index];
+                  final msg = msgs[index];
                   final isMe = msg.senderId == myId;
                   
                   return Align(
                     alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      constraints: BoxConstraints(maxWidth: Get.width * 0.75),
                       decoration: BoxDecoration(
-                        color: isMe ? Colors.indigo : Colors.grey.shade200,
+                        color: isMe ? const Color(0xFF0A2C6C) : Colors.grey.shade100,
                         borderRadius: BorderRadius.only(
-                          topLeft: const Radius.circular(12),
-                          topRight: const Radius.circular(12),
-                          bottomLeft: isMe ? const Radius.circular(12) : Radius.zero,
-                          bottomRight: isMe ? Radius.zero : const Radius.circular(12),
+                          topLeft: const Radius.circular(16),
+                          topRight: const Radius.circular(16),
+                          bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
+                          bottomRight: isMe ? Radius.zero : const Radius.circular(16),
                         ),
                       ),
                       child: Text(
                         msg.text,
-                        style: TextStyle(color: isMe ? Colors.white : Colors.black87),
+                        style: TextStyle(
+                          color: isMe ? Colors.white : Colors.black87,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   );
@@ -83,32 +93,43 @@ class _ChatRoomViewState extends State<ChatRoomView> {
 
   Widget _buildInputArea() {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(blurRadius: 2, color: Colors.black.withOpacity(0.1))]
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller.messageController,
-              decoration: const InputDecoration(
-                hintText: 'Tulis pesan...',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: TextField(
+                  controller: controller.messageController,
+                  decoration: const InputDecoration(
+                    hintText: 'Tulis pesan...',
+                    border: InputBorder.none,
+                  ),
+                ),
               ),
             ),
-          ),
-          Obx(() => IconButton(
-            icon: controller.isSending.value 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.send, color: Colors.indigo),
-            onPressed: controller.isSending.value 
-                ? null 
-                : controller.sendMessage,
-          )),
-        ],
+            const SizedBox(width: 8),
+            Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF0A2C6C),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                onPressed: controller.sendMessage,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

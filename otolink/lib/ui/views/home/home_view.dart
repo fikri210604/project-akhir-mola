@@ -1,10 +1,16 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../products/product_list_view.dart';
 import 'package:get/get.dart';
+import 'dart:math';
+
+import '../products/product_list_view.dart';
 import '../search/search_view.dart';
 import '../../../app/controllers/category_controller.dart';
+import '../../../app/controllers/product_controller.dart';
 import '../../utils/category_icon_options.dart';
 import '../products/category_products_view.dart';
+import '../../widgets/ngrok_image.dart';
+import '../../../app/routes/routes.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,12 +23,18 @@ class _HomePageState extends State<HomePage> {
   String selectedCity = 'Lokasi';
   bool isLoading = false;
   late final CategoryController _categoryCtrl;
+  late final ProductController _productCtrl;
 
   @override
   void initState() {
     super.initState();
     _categoryCtrl = Get.find<CategoryController>();
+    _productCtrl = Get.find<ProductController>();
+    
     _categoryCtrl.load();
+    if (_productCtrl.products.isEmpty) {
+      _productCtrl.refreshProducts();
+    }
   }
 
   Future<void> refreshLocation() async {
@@ -87,6 +99,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () {},
             child: Image.asset('assets/images/logo.png', width: 40),
           ),
+
           Row(
             children: [
               const Icon(Icons.location_on, color: Colors.redAccent, size: 18),
@@ -124,6 +137,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
+
           const Icon(Icons.notifications_none, color: Colors.black54, size: 26),
         ],
       ),
@@ -145,13 +159,16 @@ class _HomePageState extends State<HomePage> {
             borderRadius: BorderRadius.circular(12),
             color: Colors.white,
           ),
-          child: Row(
-            children: const [
+          child: const Row(
+            children: [
               Icon(Icons.search, color: Colors.grey),
               SizedBox(width: 10),
-              Text(
-                "Temukan Mobil, Motor, Sepeda, dan lain-lainnya...",
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+              Expanded(
+                child: Text(
+                  "Temukan Mobil, Motor, dll...",
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -161,26 +178,38 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBannerSection() {
+    final banners = [
+      'assets/images/banner1.png',
+      'assets/images/banner2.png',
+      'assets/images/banner3.png', 
+    ];
+
     return SizedBox(
       height: 180,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          _bannerCard('assets/images/banner1.png'),
-          _bannerCard('assets/images/banner2.png'),
-        ],
-      ),
-    );
-  }
-
-  Widget _bannerCard(String imagePath) {
-    return Container(
-      width: 300,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover),
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+        ),
+        child: PageView.builder(
+          controller: PageController(viewportFraction: 0.9),
+          padEnds: false,
+          itemCount: banners.length,
+          itemBuilder: (context, index) {
+            return Container(
+              margin: const EdgeInsets.only(right: 12, left: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  image: AssetImage(banners[index]),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -188,29 +217,37 @@ class _HomePageState extends State<HomePage> {
   Widget _buildCategorySection() {
     return SizedBox(
       height: 130,
-      child: Obx(() {
-        final cats = _categoryCtrl.categories;
-        final loading = _categoryCtrl.loading.value;
-        if (loading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (cats.isEmpty) {
-          return const Center(child: Text('Belum ada kategori'));
-        }
-        return ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: cats.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
-          itemBuilder: (context, index) {
-            final c = cats[index];
-            return GestureDetector(
-              onTap: () => Get.to(() => CategoryProductsView(category: c)),
-              child: _categoryCard(CategoryIconOptions.iconOf(c.icon), c.name),
-            );
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
           },
-        );
-      }),
+        ),
+        child: Obx(() {
+          final cats = _categoryCtrl.categories;
+          final loading = _categoryCtrl.loading.value;
+          if (loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (cats.isEmpty) {
+            return const Center(child: Text('Belum ada kategori'));
+          }
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: cats.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final c = cats[index];
+              return GestureDetector(
+                onTap: () => Get.to(() => CategoryProductsView(category: c)),
+                child: _categoryCard(CategoryIconOptions.iconOf(c.icon), c.name),
+              );
+            },
+          );
+        }),
+      ),
     );
   }
 
@@ -251,25 +288,40 @@ class _HomePageState extends State<HomePage> {
   Widget _buildRecommendation() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: _productCard(
-              "Honda CIVIC 1.5L 2020",
-              "Rp 530.000.000",
-              "assets/images/mobil1.png",
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _productCard(
-              "Koenigsegg Agera RS 2020",
-              "Rp 1.350.000.000",
-              "assets/images/mobil2.png",
-            ),
-          ),
-        ],
-      ),
+      child: Obx(() {
+        if (_productCtrl.loading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final allProducts = _productCtrl.products;
+        if (allProducts.isEmpty) {
+          return const Text('Belum ada rekomendasi');
+        }
+
+        final randomList = List.of(allProducts)..shuffle(Random());
+        final recommendations = randomList.take(2).toList();
+
+        return Row(
+          children: recommendations.asMap().entries.map((entry) {
+            final index = entry.key;
+            final p = entry.value;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: index == 0 ? 0 : 5, right: index == 0 ? 5 : 0),
+                child: GestureDetector(
+                  onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
+                  child: _productCard(
+                    p.title,
+                    "Rp ${p.price.toStringAsFixed(0)}",
+                    p.images.isNotEmpty ? p.images.first : '',
+                    p.location ?? "Indonesia",
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      }),
     );
   }
 
@@ -297,7 +349,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _productCard(String title, String price, String imagePath) {
+  Widget _productCard(String title, String price, String imageUrl, String location) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -313,17 +365,29 @@ class _HomePageState extends State<HomePage> {
         children: [
           Container(
             height: 100,
+            width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: AssetImage(imagePath),
-                fit: BoxFit.cover,
-              ),
+              color: Colors.grey.shade100,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: imageUrl.isNotEmpty
+                  ? NgrokImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+                    )
+                  : const Icon(Icons.image, color: Colors.grey),
             ),
           ),
+
           const SizedBox(height: 6),
+
           Text(
             price,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFF0A2C6C),
               fontWeight: FontWeight.bold,
@@ -332,14 +396,25 @@ class _HomePageState extends State<HomePage> {
           ),
           Text(
             title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
+
           const SizedBox(height: 3),
-          const Row(
+
+          Row(
             children: [
-              Icon(Icons.location_on, color: Colors.grey, size: 14),
-              SizedBox(width: 4),
-              Text("Rajabasa, Bandar L", style: TextStyle(fontSize: 11)),
+              const Icon(Icons.location_on, color: Colors.grey, size: 14),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  location,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ],

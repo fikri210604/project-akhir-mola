@@ -183,8 +183,21 @@ class _AddProductViewState extends State<AddProductView> {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: kIsWeb
-                                  ? Image.network(xfile.path, width: 80, height: 80, fit: BoxFit.cover)
-                                  : Image.file(File(xfile.path), width: 80, height: 80, fit: BoxFit.cover),
+                                  ? Image.network(
+                                      xfile.path, 
+                                      width: 80, 
+                                      height: 80, 
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (c, o, s) => Container(
+                                        width: 80, height: 80, color: Colors.grey, child: const Icon(Icons.error),
+                                      ),
+                                    )
+                                  : Image.file(
+                                      File(xfile.path), 
+                                      width: 80, 
+                                      height: 80, 
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                             Positioned(
                               right: -8,
