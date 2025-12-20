@@ -1,14 +1,10 @@
 import '../models/chat_thread.dart';
 import '../models/message.dart';
+import '../models/user.dart';
 
 abstract class ChatService {
-  Future<List<ChatThread>> listThreads(String userId);
-  Future<List<Message>> listMessages(String threadId);
-  Future<ChatThread> startThread(List<String> participantIds);
-  Future<Message> sendMessage({
-    required String threadId,
-    required String senderId,
-    required String text,
-  });
+  Future<String> createOrGetThread(AppUser otherUser, String productId);
+  Future<List<ChatThread>> getThreads();
+  Stream<List<Message>> getMessages(String threadId);
+  Future<Message> sendMessage(String threadId, Message message);
 }
-

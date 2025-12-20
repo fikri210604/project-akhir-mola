@@ -1,29 +1,29 @@
 import 'package:get/get.dart';
-
 import '../models/product_category.dart';
 import '../models/category_field.dart';
 import '../services/category_service.dart';
+import 'base_controller.dart';
 
-class CategoryController extends GetxController {
+class CategoryController extends BaseController {
   final CategoryService _service;
   CategoryController(this._service);
 
   final RxList<ProductCategory> categories = <ProductCategory>[].obs;
-  final RxBool loading = false.obs;
   final RxList<CategoryField> fields = <CategoryField>[].obs;
+  
   final RxBool fieldsLoading = false.obs;
 
   Future<void> load() async {
-    loading.value = true;
-    try {
-      final list = await _service.listCategories();
-      if (list.isNotEmpty) {
-        categories.assignAll(list);
-      } else {
-        categories.assignAll(_defaultCategories());
-      }
-    } finally {
-      loading.value = false;
+    final list = await runAsync(
+      () => _service.listCategories(),
+      timeout: const Duration(seconds: 8),
+      defaultValue: <ProductCategory>[]
+    );
+    
+    if (list != null && list.isNotEmpty) {
+      categories.assignAll(list);
+    } else {
+      categories.assignAll(_defaultCategories());
     }
   }
 
@@ -32,6 +32,8 @@ class CategoryController extends GetxController {
     try {
       final list = await _service.listFields(categoryId);
       fields.assignAll(list);
+    } catch (e) {
+      fields.clear();
     } finally {
       fieldsLoading.value = false;
     }

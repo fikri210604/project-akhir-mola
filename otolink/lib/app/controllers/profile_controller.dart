@@ -1,36 +1,38 @@
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fa;
-
+import '../services/auth_service.dart';
 import '../routes/routes.dart';
-import 'auth_controller.dart';
+import 'base_controller.dart';
 
-class ProfileController extends GetxController {
-  final RxBool isLoading = false.obs;
-  final RxString userName = '-'.obs;
-  final RxString userEmail = '-'.obs;
+class ProfileController extends BaseController {
+  final AuthService _authService;
+  
+  ProfileController(this._authService);
 
-  Future<void> loadUser() async {
-    isLoading.value = true;
-    try {
-      final auth = Get.find<AuthController>();
-      final appUser = auth.currentUser.value;
-      userName.value = appUser?.displayName ?? 'Guest';
+  final userName = ''.obs;
+  final userEmail = ''.obs;
+  final userPhoto = ''.obs;
 
-      final email = fa.FirebaseAuth.instance.currentUser?.email;
-      userEmail.value = email ?? '-';
-    } finally {
-      isLoading.value = false;
+  @override
+  void onInit() {
+    super.onInit();
+    loadUser();
+  }
+
+  void loadUser() {
+    final user = _authService.currentUser;
+    if (user != null) {
+      userName.value = user.displayName;
+      userEmail.value = user.email ?? 'Tidak ada email';
+      userPhoto.value = user.photoUrl ?? '';
+    } else {
+      userName.value = 'Tamu';
+      userEmail.value = '';
+      userPhoto.value = '';
     }
   }
 
   Future<void> logout() async {
-    isLoading.value = true;
-    try {
-      await Get.find<AuthController>().signOut();
-      Get.offAllNamed(AppRoutes.welcome);
-    } finally {
-      isLoading.value = false;
-    }
+    await runAsync(() => _authService.signOut());
+    Get.offAllNamed(AppRoutes.welcome);
   }
 }
-

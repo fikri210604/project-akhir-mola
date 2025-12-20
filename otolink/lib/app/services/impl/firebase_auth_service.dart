@@ -14,7 +14,12 @@ class FirebaseAuthService implements AuthService {
 
   AppUser? _mapUser(fa.User? user) {
     if (user == null) return null;
-    return AppUser(id: user.uid, displayName: user.displayName ?? 'Guest', photoUrl: user.photoURL);
+    return AppUser(
+      id: user.uid,
+      displayName: user.displayName ?? 'Guest',
+      photoUrl: user.photoURL,
+      email: user.email,
+    );
   }
 
   @override

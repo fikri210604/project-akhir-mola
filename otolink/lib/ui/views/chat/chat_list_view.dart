@@ -1,54 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../../../app/controllers/auth_controller.dart';
 import '../../../app/controllers/chat_controller.dart';
-import '../../../app/models/chat_thread.dart';
+import '../../../app/services/auth_service.dart';
+import '../../../app/routes/routes.dart';
 
-class ChatListView extends StatelessWidget {
+class ChatListView extends StatefulWidget {
   const ChatListView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final auth = Get.find<AuthController>();
-    final chat = Get.find<ChatController>();
-    final user = auth.currentUser.value;
+  State<ChatListView> createState() => _ChatListViewState();
+}
 
+class _ChatListViewState extends State<ChatListView> {
+  late final ChatController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<ChatController>();
+    controller.loadThreads();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Get.find<AuthService>().currentUser;
     if (user == null) {
-      return Scaffold(
-        body: const Center(child: Text('Silakan login untuk melihat chat')),
-      );
+      return const Scaffold(body: Center(child: Text("Silakan login untuk melihat chat")));
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
-      body: FutureBuilder<List<ChatThread>>(
-        future: chat.threads(user.id),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          final items = snapshot.data ?? const <ChatThread>[];
-          if (items.isEmpty) {
-            return const Center(child: Text('Belum ada percakapan'));
-          }
-          return ListView.separated(
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final t = items[index];
-              return ListTile(
-                title: Text('Thread ${t.id}'),
-                subtitle: Text('Peserta: ${t.participantIds.join(', ')}'),
-                onTap: () => Get.toNamed('/chat', arguments: t.id),
-              );
-            },
-          );
-        },
-      ),
+      appBar: AppBar(title: const Text("Pesan")),
+      body: Obx(() {
+        final threads = controller.threadList;
+        
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (threads.isEmpty) {
+          return const Center(child: Text("Belum ada percakapan"));
+        }
+
+        return ListView.separated(
+          itemCount: threads.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final t = threads[index];
+            final otherNames = t.participantNames.entries
+                .where((e) => e.key != user.id)
+                .map((e) => e.value)
+                .join(", ");
+
+            return ListTile(
+              leading: const CircleAvatar(child: Icon(Icons.person)),
+              title: Text(otherNames.isEmpty ? "User" : otherNames),
+              subtitle: Text(
+                t.lastMessage.isNotEmpty ? t.lastMessage : "Mulai percakapan...",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Text(
+                "${t.lastUpdated.hour}:${t.lastUpdated.minute.toString().padLeft(2, '0')}",
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              onTap: () {
+                Get.toNamed(AppRoutes.chat, arguments: t.id);
+              },
+            );
+          },
+        );
+      }),
     );
   }
 }

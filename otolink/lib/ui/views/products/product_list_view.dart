@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
 
 import '../../../app/models/product.dart';
 import '../../../app/controllers/product_controller.dart';
 import '../../../app/routes/routes.dart';
+import '../../widgets/smart_image.dart';
 
 class ProductListView extends StatelessWidget {
   final String? categoryId;
@@ -40,25 +40,11 @@ class ProductListView extends StatelessWidget {
             if (p.images.isNotEmpty) {
               leading = ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: p.images.first,
+                child: SmartImage(
+                  p.images.first,
                   width: 56,
                   height: 56,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    width: 56,
-                    height: 56,
-                    color: Colors.grey.shade200,
-                    alignment: Alignment.center,
-                    child: const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    width: 56,
-                    height: 56,
-                    color: Colors.grey.shade200,
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.image_not_supported, color: Colors.grey),
-                  ),
                 ),
               );
             } else {

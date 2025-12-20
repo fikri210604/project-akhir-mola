@@ -1,28 +1,49 @@
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import '../services/image_storage_service.dart';
 
 class ProductPhotoController extends GetxController {
-  final mainPhoto = Rx<File?>(null);
-  final otherPhotos = <File>[].obs;
+  final ImageStorageService _service;
+  ProductPhotoController(this._service);
 
-  final picker = ImagePicker();
+  final RxList<File> selectedFiles = <File>[].obs;
+  final RxList<String> uploadedUrls = <String>[].obs;
+  final RxBool uploading = false.obs;
 
-  Future<void> pickMainPhoto() async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) {
-      mainPhoto.value = File(x.path);
+  Future<void> pickImages() async {
+    final picker = ImagePicker();
+    final results = await picker.pickMultiImage(imageQuality: 50); // Kompres agar string base64 tidak terlalu besar
+    if (results.isNotEmpty) {
+      selectedFiles.addAll(results.map((e) => File(e.path)));
     }
   }
 
-  Future<void> pickOtherPhoto() async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) {
-      otherPhotos.add(File(x.path));
+  void removeImage(int index) {
+    selectedFiles.removeAt(index);
+  }
+
+  Future<List<String>> uploadAll() async {
+    if (selectedFiles.isEmpty) return [];
+
+    uploading.value = true;
+    uploadedUrls.clear();
+
+    try {
+      for (final file in selectedFiles) {
+        final result = await _service.uploadImage(file, 'products');
+        uploadedUrls.add(result);
+      }
+      return uploadedUrls;
+    } catch (e) {
+      rethrow;
+    } finally {
+      uploading.value = false;
     }
   }
 
-  void removeOtherPhoto(int index) {
-    otherPhotos.removeAt(index);
+  void clear() {
+    selectedFiles.clear();
+    uploadedUrls.clear();
   }
 }

@@ -41,49 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC3RqH3oOkQD-0fQN3eCEqj_hmHSL-wvwY',
-    appId: '1:1021004998637:web:5c7991202dad4717e469e4',
-    messagingSenderId: '1021004998637',
-    projectId: 'otolink-3af12',
-    authDomain: 'otolink-3af12.firebaseapp.com',
-    storageBucket: 'otolink-3af12.firebasestorage.app',
-    measurementId: 'G-VWF65ZH63L',
+    apiKey: 'AIzaSyDGSsQvManFvqhiMjYzk6he35pFr9fF3yE',
+    appId: '1:307129817228:web:36cbb6b2670b4a13c843a9',
+    messagingSenderId: '307129817228',
+    projectId: 'otolink-38c70',
+    authDomain: 'otolink-38c70.firebaseapp.com',
+    storageBucket: 'otolink-38c70.firebasestorage.app',
+    measurementId: 'G-8GMEG6DSEM',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCwGy_ueMHPPVFaeri1rL-wirz-OO-6T_U',
-    appId: '1:1021004998637:android:71b6bb822ebc1e15e469e4',
-    messagingSenderId: '1021004998637',
-    projectId: 'otolink-3af12',
-    storageBucket: 'otolink-3af12.firebasestorage.app',
+    apiKey: 'AIzaSyBPHjGWssOsQ0zUpzoN_d94gCQctA7Azd4',
+    appId: '1:307129817228:android:2cf0bdb7b84b5edec843a9',
+    messagingSenderId: '307129817228',
+    projectId: 'otolink-38c70',
+    storageBucket: 'otolink-38c70.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCjaIMHwFQZi1CqYuYjmSUWe245Kf6Js7c',
-    appId: '1:1021004998637:ios:73a234c0e9c5e1f2e469e4',
-    messagingSenderId: '1021004998637',
-    projectId: 'otolink-3af12',
-    storageBucket: 'otolink-3af12.firebasestorage.app',
+    apiKey: 'AIzaSyBNf8ZjBwZE8dxyMzNXu_XH4hqMkEoHMt4',
+    appId: '1:307129817228:ios:27e6787a346613ccc843a9',
+    messagingSenderId: '307129817228',
+    projectId: 'otolink-38c70',
+    storageBucket: 'otolink-38c70.firebasestorage.app',
     iosBundleId: 'com.example.otolink',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCjaIMHwFQZi1CqYuYjmSUWe245Kf6Js7c',
-    appId: '1:1021004998637:ios:73a234c0e9c5e1f2e469e4',
-    messagingSenderId: '1021004998637',
-    projectId: 'otolink-3af12',
-    storageBucket: 'otolink-3af12.firebasestorage.app',
+    apiKey: 'AIzaSyBNf8ZjBwZE8dxyMzNXu_XH4hqMkEoHMt4',
+    appId: '1:307129817228:ios:27e6787a346613ccc843a9',
+    messagingSenderId: '307129817228',
+    projectId: 'otolink-38c70',
+    storageBucket: 'otolink-38c70.firebasestorage.app',
     iosBundleId: 'com.example.otolink',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyC3RqH3oOkQD-0fQN3eCEqj_hmHSL-wvwY',
-    appId: '1:1021004998637:web:7232751118c1aea2e469e4',
-    messagingSenderId: '1021004998637',
-    projectId: 'otolink-3af12',
-    authDomain: 'otolink-3af12.firebaseapp.com',
-    storageBucket: 'otolink-3af12.firebasestorage.app',
-    measurementId: 'G-SPZMGPHTHJ',
+    apiKey: 'AIzaSyDGSsQvManFvqhiMjYzk6he35pFr9fF3yE',
+    appId: '1:307129817228:web:08c8c503a265a6fdc843a9',
+    messagingSenderId: '307129817228',
+    projectId: 'otolink-38c70',
+    authDomain: 'otolink-38c70.firebaseapp.com',
+    storageBucket: 'otolink-38c70.firebasestorage.app',
+    measurementId: 'G-8PE2PTQ8LF',
   );
 
 }

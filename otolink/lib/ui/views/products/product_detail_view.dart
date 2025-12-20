@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../app/controllers/product_controller.dart';
 import '../../../app/models/product.dart';
+import '../../widgets/smart_image.dart';
 
 class ProductDetailView extends StatefulWidget {
   const ProductDetailView({super.key});
@@ -107,20 +107,10 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                   child: const Icon(Icons.image, size: 64, color: Colors.grey),
                 );
               }
-              return CachedNetworkImage(
-                imageUrl: images[i],
+              return SmartImage(
+                images[i],
                 fit: BoxFit.cover,
                 width: double.infinity,
-                placeholder: (_, __) => Container(
-                  color: Colors.grey.shade200,
-                  alignment: Alignment.center,
-                  child: const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  color: Colors.grey.shade200,
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.broken_image, size: 48, color: Colors.grey),
-                ),
               );
             },
           ),

@@ -1,17 +1,68 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../models/chat_thread.dart';
 import '../models/message.dart';
+import '../models/chat_thread.dart';
 import '../services/chat_service.dart';
+import '../services/auth_service.dart';
+import 'base_controller.dart';
 
-class ChatController extends GetxController {
+class ChatController extends BaseController {
   final ChatService _service;
-  ChatController(this._service);
+  final AuthService _authService;
+  
+  ChatController(this._service, this._authService);
 
-  Future<List<ChatThread>> threads(String userId) => _service.listThreads(userId);
-  Future<List<Message>> messages(String threadId) => _service.listMessages(threadId);
-  Future<ChatThread> start(List<String> participantIds) => _service.startThread(participantIds);
-  Future<Message> send({required String threadId, required String senderId, required String text}) =>
-      _service.sendMessage(threadId: threadId, senderId: senderId, text: text);
+  final messageController = TextEditingController();
+  final RxList<Message> messages = <Message>[].obs;
+  final RxList<ChatThread> threadList = <ChatThread>[].obs;
+  String? currentThreadId;
+
+  @override
+  void onInit() {
+    super.onInit();
+  }
+
+  void initChat(String threadId) {
+    currentThreadId = threadId;
+    messages.bindStream(_service.getMessages(threadId));
+  }
+
+  Future<void> loadThreads() async {
+    final list = await runAsync(() => _service.getThreads(), defaultValue: <ChatThread>[]);
+    if (list != null) threadList.assignAll(list);
+  }
+
+  Future<void> sendMessage() async {
+    final text = messageController.text.trim();
+    if (text.isEmpty || currentThreadId == null) return;
+
+    final user = _authService.currentUser;
+    if (user == null) {
+      _handleError('Anda harus login');
+      return;
+    }
+
+    messageController.clear();
+
+    final msg = Message(
+      id: '',
+      senderId: user.id,
+      content: text,
+      timestamp: DateTime.now(),
+    );
+
+    await runAsync(() => _service.sendMessage(currentThreadId!, msg), showLoading: false);
+  }
+
+  void _handleError(String msg) {
+    if (Get.context != null) {
+      ScaffoldMessenger.of(Get.context!).showSnackBar(SnackBar(content: Text(msg)));
+    }
+  }
+
+  @override
+  void onClose() {
+    messageController.dispose();
+    super.onClose();
+  }
 }
-
