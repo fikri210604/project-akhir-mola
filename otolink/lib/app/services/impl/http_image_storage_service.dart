@@ -19,6 +19,11 @@ class HttpImageStorageService implements ImageStorageService {
     try {
       final uri = Uri.parse('${AppConstants.storageBaseUrl}/upload');
       var request = http.MultipartRequest('POST', uri);
+      
+      request.headers.addAll({
+        'ngrok-skip-browser-warning': 'true',
+        'Access-Control-Allow-Origin': '*',
+      });
 
       if (kIsWeb) {
         final bytes = await file.readAsBytes();
@@ -36,10 +41,13 @@ class HttpImageStorageService implements ImageStorageService {
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
         final json = jsonDecode(respStr);
-        return json['url'];
+        
+        final serverUrl = json['url'] as String;
+        final filename = serverUrl.split('/').last;
+        
+        return '${AppConstants.storageBaseUrl}/images/$filename';
       }
     } catch (e) {
-      print('Http Upload Error: $e');
       return '';
     }
     return '';

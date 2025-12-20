@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/controllers/chat_controller.dart';
-import '../../../app/services/auth_service.dart';
+import '../../../app/controllers/auth_controller.dart';
 
 class ChatRoomView extends StatefulWidget {
   const ChatRoomView({super.key});
@@ -11,25 +11,21 @@ class ChatRoomView extends StatefulWidget {
 }
 
 class _ChatRoomViewState extends State<ChatRoomView> {
-  late final ChatController controller;
-  final String? threadId = Get.arguments as String?;
+  final controller = Get.find<ChatController>();
+  final authController = Get.find<AuthController>();
 
   @override
   void initState() {
     super.initState();
-    controller = Get.find<ChatController>();
+    final String? threadId = Get.arguments;
     if (threadId != null) {
-      controller.initChat(threadId!);
+      controller.initChat(threadId);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (threadId == null) {
-      return const Scaffold(body: Center(child: Text("Chat Error: No Thread ID")));
-    }
-
-    final myId = Get.find<AuthService>().currentUser?.id ?? '';
+    final myId = authController.currentUser.value?.id ?? '';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Chat')),
@@ -37,28 +33,40 @@ class _ChatRoomViewState extends State<ChatRoomView> {
         children: [
           Expanded(
             child: Obx(() {
-              final msgs = controller.messages;
-              if (msgs.isEmpty) {
-                return const Center(child: Text("Belum ada pesan"));
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
               }
+
+              final msgs = controller.messageList;
+              if (msgs.isEmpty) {
+                return const Center(child: Text('Belum ada pesan'));
+              }
+
+              final reversedMsgs = msgs.toList().reversed.toList();
+
               return ListView.builder(
-                reverse: true,
-                itemCount: msgs.length,
-                padding: const EdgeInsets.all(16),
+                reverse: true, 
+                itemCount: reversedMsgs.length,
                 itemBuilder: (context, index) {
-                  final msg = msgs[index];
+                  final msg = reversedMsgs[index];
                   final isMe = msg.senderId == myId;
+                  
                   return Align(
                     alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                     child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isMe ? const Color(0xFF0A2C6C) : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
+                        color: isMe ? Colors.indigo : Colors.grey.shade200,
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(12),
+                          topRight: const Radius.circular(12),
+                          bottomLeft: isMe ? const Radius.circular(12) : Radius.zero,
+                          bottomRight: isMe ? Radius.zero : const Radius.circular(12),
+                        ),
                       ),
                       child: Text(
-                        msg.content,
+                        msg.text,
                         style: TextStyle(color: isMe ? Colors.white : Colors.black87),
                       ),
                     ),
@@ -67,33 +75,39 @@ class _ChatRoomViewState extends State<ChatRoomView> {
               );
             }),
           ),
-          _buildInput(),
+          _buildInputArea(),
         ],
       ),
     );
   }
 
-  Widget _buildInput() {
+  Widget _buildInputArea() {
     return Container(
       padding: const EdgeInsets.all(8),
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(blurRadius: 2, color: Colors.black.withOpacity(0.1))]
+      ),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: controller.messageController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Tulis pesan...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.send, color: Color(0xFF0A2C6C)),
-            onPressed: controller.sendMessage,
-          ),
+          Obx(() => IconButton(
+            icon: controller.isSending.value 
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.send, color: Colors.indigo),
+            onPressed: controller.isSending.value 
+                ? null 
+                : controller.sendMessage,
+          )),
         ],
       ),
     );

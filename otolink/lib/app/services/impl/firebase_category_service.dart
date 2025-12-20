@@ -14,8 +14,8 @@ class FirebaseCategoryService implements CategoryService {
     final d = doc.data()!;
     return ProductCategory(
       id: doc.id,
-      name: d['name'] as String,
-      icon: d['icon'] as String? ?? '',
+      name: (d['name'] as String?) ?? '-',
+      icon: (d['icon'] as String?) ?? '',
     );
   }
 
@@ -43,8 +43,8 @@ class FirebaseCategoryService implements CategoryService {
     final d = doc.data()!;
     return CategoryField(
       id: doc.id,
-      label: d['label'] as String,
-      type: d['type'] as String,
+      label: (d['label'] as String?) ?? 'Field',
+      type: (d['type'] as String?) ?? 'text',
       required: (d['required'] as bool?) ?? false,
       order: (d['order'] as num?)?.toInt() ?? 0,
       hint: d['hint'] as String?,
@@ -57,7 +57,15 @@ class FirebaseCategoryService implements CategoryService {
 
   @override
   Future<List<CategoryField>> listFields(String categoryId) async {
-    final q = await _col.doc(categoryId).collection('fields').orderBy('order').get();
-    return q.docs.map(_fieldFromDoc).toList();
+    try {
+      final q = await _col.doc(categoryId).collection('fields').orderBy('order').get();
+      if (q.docs.isNotEmpty) {
+        return q.docs.map(_fieldFromDoc).toList();
+      }
+    } catch (e) {
+    }
+    
+    final qFallback = await _col.doc(categoryId).collection('fields').get();
+    return qFallback.docs.map(_fieldFromDoc).toList();
   }
 }

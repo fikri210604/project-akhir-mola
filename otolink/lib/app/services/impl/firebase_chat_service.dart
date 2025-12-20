@@ -1,109 +1,115 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../models/chat_thread.dart';
 import '../../models/message.dart';
-import '../../models/user.dart';
 import '../chat_service.dart';
-import '../log_service.dart';
-import '../auth_service.dart';
-import 'package:get/get.dart';
 
 class FirebaseChatService implements ChatService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+  FirebaseChatService({FirebaseFirestore? db}) : _db = db ?? FirebaseFirestore.instance;
 
-  @override
-  Future<String> createOrGetThread(AppUser otherUser, String productId) async {
-    try {
-      final authService = Get.find<AuthService>();
-      final currentUser = authService.currentUser;
-      
-      if (currentUser == null) throw Exception("User not logged in");
+  CollectionReference<Map<String, dynamic>> get _threads => _db.collection('threads');
 
-      final q = await _db.collection('chats')
-          .where('product_id', isEqualTo: productId)
-          .where('participants', arrayContains: currentUser.id)
-          .get();
-
-      for (var doc in q.docs) {
-        final data = doc.data();
-        final participants = List<String>.from(data['participants'] ?? []);
-        if (participants.contains(otherUser.id)) {
-          return doc.id;
-        }
-      }
-
-      final docRef = await _db.collection('chats').add({
-        'product_id': productId,
-        'participants': [currentUser.id, otherUser.id],
-        'last_message': '',
-        'last_updated': FieldValue.serverTimestamp(),
-        'participant_names': {
-          currentUser.id: currentUser.displayName,
-          otherUser.id: otherUser.displayName,
-        }
-      });
-      return docRef.id;
-    } catch (e, s) {
-      LogService.error('FirebaseChatService', 'Error creating thread', e, s);
-      rethrow;
-    }
+  String _threadKey(List<String> participantIds) {
+    final sorted = [...participantIds]..sort();
+    return sorted.join('_');
   }
 
-  @override
-  Future<List<ChatThread>> getThreads() async {
-    try {
-      final authService = Get.find<AuthService>();
-      final currentUser = authService.currentUser;
-      if (currentUser == null) return [];
-
-      final snapshot = await _db.collection('chats')
-          .where('participants', arrayContains: currentUser.id)
-          .orderBy('last_updated', descending: true)
-          .get();
-      
-      return snapshot.docs.map((d) => ChatThread.fromMap(d.id, d.data())).toList();
-    } catch (e, s) {
-      LogService.error('FirebaseChatService', 'Error fetching threads', e, s);
-      return [];
-    }
-  }
-
-  @override
-  Stream<List<Message>> getMessages(String threadId) {
-    return _db.collection('chats')
-        .doc(threadId)
-        .collection('messages')
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((d) => Message.fromMap(d.id, d.data())).toList();
-        });
-  }
-
-  @override
-  Future<Message> sendMessage(String threadId, Message message) async {
-    try {
-      final docRef = await _db.collection('chats').doc(threadId).collection('messages').add({
-        'sender_id': message.senderId,
-        'content': message.content,
-        'timestamp': FieldValue.serverTimestamp(),
-        'type': 'text',
-      });
-
-      await _db.collection('chats').doc(threadId).update({
-        'last_message': message.content,
-        'last_updated': FieldValue.serverTimestamp(),
-      });
-
-      return Message(
-        id: docRef.id,
-        senderId: message.senderId,
-        content: message.content,
-        timestamp: DateTime.now(),
-        type: 'text'
+  ChatThread _threadFromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data()!;
+    Message? lastMsg;
+    
+    if (d['lastMessage'] != null && d['lastMessage'] is Map) {
+      final lm = d['lastMessage'] as Map<String, dynamic>;
+      lastMsg = Message(
+        id: 'last',
+        threadId: doc.id,
+        senderId: lm['senderId'] ?? '',
+        text: lm['text'] ?? '',
+        timestamp: (d['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
-    } catch (e, s) {
-      LogService.error('FirebaseChatService', 'Error sending message', e, s);
-      rethrow;
     }
+
+    return ChatThread(
+      id: doc.id,
+      participantIds: List<String>.from(d['participantIds'] ?? []),
+      lastMessage: lastMsg,
+      updatedAt: (d['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Message _messageFromDoc(DocumentSnapshot<Map<String, dynamic>> doc, String threadId) {
+    final d = doc.data()!;
+    return Message(
+      id: doc.id,
+      threadId: threadId,
+      senderId: (d['senderId'] as String?) ?? '',
+      text: (d['text'] as String?) ?? '',
+      timestamp: (d['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  @override
+  Future<List<ChatThread>> listThreads(String userId) async {
+    final q = await _threads.where('participantIds', arrayContains: userId).get();
+    
+    final threads = q.docs.map(_threadFromDoc).toList();
+    threads.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    
+    return threads;
+  }
+
+  @override
+  Future<List<Message>> listMessages(String threadId) async {
+    final q = await _threads.doc(threadId).collection('messages').orderBy('timestamp').get();
+    return q.docs.map((d) => _messageFromDoc(d, threadId)).toList();
+  }
+
+  @override
+  Future<ChatThread> startThread(List<String> participantIds) async {
+    final key = _threadKey(participantIds);
+    final q = await _threads.where('key', isEqualTo: key).limit(1).get();
+    
+    if (q.docs.isNotEmpty) {
+      return _threadFromDoc(q.docs.first);
+    }
+
+    final ref = await _threads.add({
+      'participantIds': participantIds,
+      'key': key,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastMessage': null,
+    });
+    
+    final snap = await ref.get();
+    return _threadFromDoc(snap);
+  }
+
+  @override
+  Future<Message> sendMessage({required String threadId, required String senderId, required String text}) async {
+    final msgRef = _threads.doc(threadId).collection('messages').doc();
+    
+    final msgData = {
+      'senderId': senderId,
+      'text': text,
+      'timestamp': FieldValue.serverTimestamp(),
+    };
+
+    final batch = _db.batch();
+    batch.set(msgRef, msgData);
+    batch.update(_threads.doc(threadId), {
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastMessage': msgData, 
+    });
+
+    await batch.commit();
+
+    return Message(
+      id: msgRef.id,
+      threadId: threadId,
+      senderId: senderId,
+      text: text,
+      timestamp: DateTime.now(),
+    );
   }
 }

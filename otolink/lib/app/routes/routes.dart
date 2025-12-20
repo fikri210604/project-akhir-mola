@@ -12,6 +12,7 @@ class AppRoutes {
   static const String loginPhone = '/login_phone';
   static const String product = '/product';
   static const String chat = '/chat';
+  static const String chatRoom = '/chat_room';
   static const String welcome = '/welcome';
 
   static final List<GetPage<dynamic>> pages = [
@@ -21,5 +22,6 @@ class AppRoutes {
     GetPage(name: signup, page: () => const SignupFlowPage()),
     GetPage(name: product, page: () => const ProductDetailView()),
     GetPage(name: chat, page: () => const ChatRoomView()),
+    GetPage(name: chatRoom, page: () => const ChatRoomView()),
   ];
 }

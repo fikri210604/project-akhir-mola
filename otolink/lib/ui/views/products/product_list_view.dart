@@ -4,62 +4,87 @@ import 'package:get/get.dart';
 import '../../../app/models/product.dart';
 import '../../../app/controllers/product_controller.dart';
 import '../../../app/routes/routes.dart';
-import '../../widgets/smart_image.dart';
+import '../../widgets/ngrok_image.dart';
 
-class ProductListView extends StatelessWidget {
+class ProductListView extends StatefulWidget {
   final String? categoryId;
   final String? categoryName;
   const ProductListView({super.key, this.categoryId, this.categoryName});
 
   @override
-  Widget build(BuildContext context) {
-    final productsCtrl = Get.find<ProductController>();
-    final Future<List<Product>> future = categoryId == null
-        ? productsCtrl.list()
-        : productsCtrl.listByCategory(categoryId!);
+  State<ProductListView> createState() => _ProductListViewState();
+}
 
-    return FutureBuilder<List<Product>>(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Terjadi kesalahan: ${snapshot.error}'));
-        }
-        final items = snapshot.data ?? const <Product>[];
-        if (items.isEmpty) {
-          return const Center(child: Text('Belum ada produk'));
-        }
-        return ListView.separated(
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final p = items[index];
-            Widget leading;
-            if (p.images.isNotEmpty) {
-              leading = ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SmartImage(
-                  p.images.first,
+class _ProductListViewState extends State<ProductListView> {
+  final productsCtrl = Get.find<ProductController>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.categoryId != null) {
+      productsCtrl.listByCategory(widget.categoryId!);
+    } else {
+      productsCtrl.refreshProducts();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (productsCtrl.loading.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      
+      final items = productsCtrl.products;
+      
+      if (items.isEmpty) {
+        return const Center(child: Text('Belum ada produk'));
+      }
+      
+      return ListView.separated(
+        itemCount: items.length,
+        padding: const EdgeInsets.only(bottom: 80),
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final p = items[index];
+          Widget leading;
+          
+          if (p.images.isNotEmpty) {
+            leading = ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: NgrokImage(
+                imageUrl: p.images.first,
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
-                  fit: BoxFit.cover,
+                  color: Colors.grey.shade200,
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.broken_image, color: Colors.grey),
                 ),
-              );
-            } else {
-              leading = CircleAvatar(child: Text(p.title.isNotEmpty ? p.title[0].toUpperCase() : '?'));
-            }
-            return ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              leading: leading,
-              title: Text(p.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-              subtitle: Text('Rp ${p.price.toStringAsFixed(0)} • ${p.category.name}'),
-              onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
+              ),
             );
-          },
-        );
-      },
-    );
+          } else {
+            leading = CircleAvatar(
+              backgroundColor: Colors.indigo.shade100,
+              child: Text(
+                p.title.isNotEmpty ? p.title[0].toUpperCase() : '?',
+                style: const TextStyle(color: Colors.indigo),
+              ),
+            );
+          }
+          
+          return ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            leading: leading,
+            title: Text(p.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: Text('Rp ${p.price.toStringAsFixed(0)} • ${p.category.name}'),
+            onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
+          );
+        },
+      );
+    });
   }
 }
