@@ -52,37 +52,43 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 16),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await _productCtrl.refreshProducts();
+            await _categoryCtrl.load();
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 16),
 
-              _buildSearchBar(),
-              const SizedBox(height: 20),
+                _buildSearchBar(),
+                const SizedBox(height: 20),
 
-              _buildBannerSection(),
-              const SizedBox(height: 20),
+                _buildBannerSection(),
+                const SizedBox(height: 20),
 
-              _buildSectionTitle("Kategori"),
-              const SizedBox(height: 10),
+                _buildSectionTitle("Kategori"),
+                const SizedBox(height: 10),
 
-              _buildCategorySection(),
-              const SizedBox(height: 20),
+                _buildCategorySection(),
+                const SizedBox(height: 20),
 
-              _buildSectionTitle("Rekomendasi"),
-              const SizedBox(height: 10),
+                _buildSectionTitle("Rekomendasi"),
+                const SizedBox(height: 10),
 
-              _buildRecommendation(),
-              const SizedBox(height: 20),
+                _buildRecommendationCarousel(),
+                const SizedBox(height: 20),
 
-              _buildSectionTitle("Produk Terbaru"),
-              const SizedBox(height: 10),
+                _buildSectionTitle("Produk Terbaru"),
+                const SizedBox(height: 10),
 
-              _buildNewestProducts(),
-            ],
+                _buildNewestProducts(),
+              ],
+            ),
           ),
         ),
       ),
@@ -97,7 +103,11 @@ class _HomePageState extends State<HomePage> {
         children: [
           GestureDetector(
             onTap: () {},
-            child: Image.asset('assets/images/logo.png', width: 40),
+            child: Image.asset(
+              'assets/images/logo.png', 
+              width: 40,
+              errorBuilder: (context, error, stackTrace) => const Icon(Icons.car_repair, size: 40, color: Color(0xFF0A2C6C)),
+            ),
           ),
 
           Row(
@@ -202,10 +212,15 @@ class _HomePageState extends State<HomePage> {
               margin: const EdgeInsets.only(right: 12, left: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.shade200,
                 image: DecorationImage(
                   image: AssetImage(banners[index]),
                   fit: BoxFit.cover,
+                  onError: (exception, stackTrace) {},
                 ),
+              ),
+              child: const Center(
+                child: Text('Promo Banner', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 10, color: Colors.black)])),
               ),
             );
           },
@@ -285,31 +300,40 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildRecommendation() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Obx(() {
-        if (_productCtrl.loading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  Widget _buildRecommendationCarousel() {
+    return SizedBox(
+      height: 220,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+        ),
+        child: Obx(() {
+          if (_productCtrl.loading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        final allProducts = _productCtrl.products;
-        if (allProducts.isEmpty) {
-          return const Text('Belum ada rekomendasi');
-        }
+          final allProducts = _productCtrl.products;
+          if (allProducts.isEmpty) {
+            return const Center(child: Text('Belum ada rekomendasi'));
+          }
 
-        final randomList = List.of(allProducts)..shuffle(Random());
-        final recommendations = randomList.take(2).toList();
+          final randomList = List.of(allProducts)..shuffle(Random());
+          final recommendations = randomList.take(6).toList();
 
-        return Row(
-          children: recommendations.asMap().entries.map((entry) {
-            final index = entry.key;
-            final p = entry.value;
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(left: index == 0 ? 0 : 5, right: index == 0 ? 5 : 0),
-                child: GestureDetector(
-                  onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: recommendations.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final p = recommendations[index];
+              return GestureDetector(
+                onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
+                child: SizedBox(
+                  width: 160,
                   child: _productCard(
                     p.title,
                     "Rp ${p.price.toStringAsFixed(0)}",
@@ -317,11 +341,11 @@ class _HomePageState extends State<HomePage> {
                     p.location ?? "Indonesia",
                   ),
                 ),
-              ),
-            );
-          }).toList(),
-        );
-      }),
+              );
+            },
+          );
+        }),
+      ),
     );
   }
 
@@ -363,26 +387,27 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 100,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.shade100,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: imageUrl.isNotEmpty
-                  ? NgrokImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
-                    )
-                  : const Icon(Icons.image, color: Colors.grey),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.shade100,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: imageUrl.isNotEmpty
+                    ? NgrokImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+                      )
+                    : const Icon(Icons.image, color: Colors.grey),
+              ),
             ),
           ),
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
 
           Text(
             price,
@@ -391,9 +416,10 @@ class _HomePageState extends State<HomePage> {
             style: const TextStyle(
               color: Color(0xFF0A2C6C),
               fontWeight: FontWeight.bold,
-              fontSize: 13,
+              fontSize: 14,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             title,
             maxLines: 1,
@@ -401,7 +427,7 @@ class _HomePageState extends State<HomePage> {
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
 
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
 
           Row(
             children: [
