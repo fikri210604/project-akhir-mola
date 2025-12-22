@@ -42,8 +42,10 @@ class _ProductListViewState extends State<ProductListView> {
       }
       
       return ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
         itemCount: items.length,
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 20),
         separatorBuilder: (_, __) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final p = items[index];

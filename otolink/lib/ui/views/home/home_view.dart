@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:math';
 
-import '../products/product_list_view.dart';
 import '../search/search_view.dart';
+import '../products/product_list_view.dart';
+import '../products/category_products_view.dart';
 import '../../../app/controllers/category_controller.dart';
 import '../../../app/controllers/product_controller.dart';
 import '../../utils/category_icon_options.dart';
-import '../products/category_products_view.dart';
 import '../../widgets/ngrok_image.dart';
 import '../../../app/routes/routes.dart';
 
@@ -350,12 +350,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildNewestProducts() {
-    return const SizedBox(
-      height: 400,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8),
-        child: ProductListView(),
-      ),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8),
+      child: ProductListView(),
     );
   }
 

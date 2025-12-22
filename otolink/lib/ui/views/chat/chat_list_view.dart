@@ -22,32 +22,37 @@ class _ChatListViewState extends State<ChatListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pesan')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Pesan", style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final threads = controller.threadList;
-        if (threads.isEmpty) {
+        if (controller.threadList.isEmpty) {
           return const Center(child: Text('Belum ada percakapan'));
         }
 
         return ListView.separated(
-          itemCount: threads.length,
+          itemCount: controller.threadList.length,
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
-            final thread = threads[index];
+            final thread = controller.threadList[index];
             final lastMsg = thread.lastMessage;
             
             return ListTile(
               leading: const CircleAvatar(
-                backgroundColor: Colors.indigo,
+                backgroundColor: Color(0xFF0A2C6C),
                 child: Icon(Icons.person, color: Colors.white),
               ),
-              title: Text('Percakapan ${index + 1}'), 
+              title: const Text('User', style: TextStyle(fontWeight: FontWeight.bold)), 
               subtitle: Text(
-                lastMsg?.text ?? 'Belum ada pesan',
+                lastMsg?.text ?? 'Mulai percakapan...',
                 maxLines: 1, 
                 overflow: TextOverflow.ellipsis
               ),

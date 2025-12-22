@@ -49,7 +49,6 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
     if (id is! String) return const Scaffold(body: Center(child: Text("Produk tidak ditemukan")));
 
     final ctrl = Get.find<ProductController>();
-    final favCtrl = Get.find<FavoriteController>();
 
     return FutureBuilder<Product?>(
       future: ctrl.byId(id),
@@ -71,27 +70,29 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
             foregroundColor: Colors.black87,
             actions: [
               IconButton(icon: const Icon(Icons.share), onPressed: () {}),
-              
-              Obx(() {
-                final isFav = favCtrl.isFav(p.id);
-                return GestureDetector(
-                  onTap: () async {
-                    await _favAnimCtrl.forward().then((_) => _favAnimCtrl.reverse());
-                    favCtrl.toggleFavorite(p.id);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: ScaleTransition(
-                      scale: _favScaleAnim.drive(Tween(begin: 1.0, end: 1.5)),
-                      child: Icon(
-                        isFav ? Icons.favorite : Icons.favorite_border,
-                        color: isFav ? Colors.pink : Colors.grey,
-                        size: 26,
+
+              GetBuilder<FavoriteController>(
+                builder: (favCtrl) {
+                  final isFav = favCtrl.isFav(p.id);
+                  return GestureDetector(
+                    onTap: () async {
+                      await _favAnimCtrl.forward().then((_) => _favAnimCtrl.reverse());
+                      favCtrl.toggleFavorite(p);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: ScaleTransition(
+                        scale: _favScaleAnim.drive(Tween(begin: 1.0, end: 1.5)),
+                        child: Icon(
+                          isFav ? Icons.favorite : Icons.favorite_border,
+                          color: isFav ? Colors.pink : Colors.grey,
+                          size: 26,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                },
+              ),
             ],
           ),
           body: SingleChildScrollView(

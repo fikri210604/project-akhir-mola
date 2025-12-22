@@ -4,73 +4,92 @@ import '../../../app/controllers/favorite_controller.dart';
 import '../../../app/routes/routes.dart';
 import '../../widgets/ngrok_image.dart';
 
-class FavoriteListView extends StatefulWidget {
+class FavoriteListView extends GetView<FavoriteController> {
   const FavoriteListView({super.key});
 
   @override
-  State<FavoriteListView> createState() => _FavoriteListViewState();
-}
-
-class _FavoriteListViewState extends State<FavoriteListView> {
-  final FavoriteController controller = Get.find<FavoriteController>();
-
-  @override
-  void initState() {
-    super.initState();
-    controller.loadFavoriteProducts();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    if (!Get.isRegistered<FavoriteController>()) {
+      print("DEBUG_VIEW: Controller belum ada, UI mungkin error");
+    } else {
+      controller.loadFavoriteProducts();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Favorit Saya"),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
+        automaticallyImplyLeading: false, 
       ),
       backgroundColor: Colors.white,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      body: GetBuilder<FavoriteController>(
+        builder: (ctrl) {
+          print("DEBUG_VIEW: Rebuild UI. Data Count: ${ctrl.favoriteProducts.length}");
 
-        if (controller.favoriteProducts.isEmpty) {
-          return const Center(child: Text("Belum ada produk favorit"));
-        }
+          if (ctrl.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.favoriteProducts.length,
-          separatorBuilder: (_, __) => const Divider(),
-          itemBuilder: (context, index) {
-            final p = controller.favoriteProducts[index];
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: p.images.isNotEmpty
-                      ? NgrokImage(imageUrl: p.images.first, fit: BoxFit.cover)
-                      : Container(color: Colors.grey[200], child: const Icon(Icons.image)),
-                ),
+          if (ctrl.favoriteProducts.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: () async => await ctrl.loadFavoriteProducts(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(height: Get.height * 0.3),
+                  const Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text("Belum ada favorit"),
+                        Text("Pastikan Anda sudah login dan menekan tombol hati"),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              title: Text(p.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-              subtitle: Text(
-                "Rp ${p.price.toStringAsFixed(0)}",
-                style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.grey),
-                onPressed: () => controller.toggleFavorite(p.id),
-              ),
-              onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
             );
-          },
-        );
-      }),
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async => await ctrl.loadFavoriteProducts(),
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: ctrl.favoriteProducts.length,
+              separatorBuilder: (_, __) => const Divider(),
+              itemBuilder: (context, index) {
+                final p = ctrl.favoriteProducts[index];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: p.images.isNotEmpty
+                          ? NgrokImage(imageUrl: p.images.first, fit: BoxFit.cover)
+                          : Container(color: Colors.grey[200], child: const Icon(Icons.image)),
+                    ),
+                  ),
+                  title: Text(p.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  subtitle: Text(
+                    "Rp ${p.price.toStringAsFixed(0)}",
+                    style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                    onPressed: () => ctrl.toggleFavorite(p),
+                  ),
+                  onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
+                );
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }

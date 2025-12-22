@@ -58,7 +58,9 @@ class _AddProductViewState extends State<AddProductView> {
     _desc.dispose();
     _price.dispose();
     _location.dispose();
-    for (var c in _dynText.values) c.dispose();
+    for (var c in _dynText.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -253,7 +255,7 @@ class _AddProductViewState extends State<AddProductView> {
                   final dropdownValue = cats.contains(_category) ? _category : null;
 
                   return DropdownButtonFormField<ProductCategory>(
-                    value: dropdownValue,
+                    initialValue: dropdownValue,
                     items: cats
                         .map((e) => DropdownMenuItem(
                               value: e,
@@ -348,7 +350,7 @@ class _AddProductViewState extends State<AddProductView> {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: DropdownButtonFormField<String>(
-                                value: _dynSelect[f.id],
+                                initialValue: _dynSelect[f.id],
                                 items: (f.options ?? const <String>[])
                                     .map((o) => DropdownMenuItem(value: o, child: Text(o)))
                                     .toList(),
@@ -368,7 +370,7 @@ class _AddProductViewState extends State<AddProductView> {
                           default:
                             return const SizedBox.shrink();
                         }
-                      }).toList(),
+                      }),
                     ],
                   );
                 }),

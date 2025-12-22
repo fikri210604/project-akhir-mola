@@ -1,13 +1,15 @@
 import 'package:get/get.dart';
+import 'dart:async';
 import '../models/product.dart';
 import '../services/product_service.dart';
 
 class ProductController extends GetxController {
   final ProductService _service;
+  
   ProductController(this._service);
 
-  final products = <Product>[].obs;
-  final loading = false.obs;
+  final RxList<Product> products = <Product>[].obs;
+  final RxBool loading = false.obs;
 
   @override
   void onInit() {
@@ -16,30 +18,47 @@ class ProductController extends GetxController {
   }
 
   Future<void> refreshProducts() async {
-    loading.value = true;
+    Future.delayed(Duration.zero, () => loading.value = true);
     try {
-      final res = await _service.listProducts();
+      final res = await _service.getProducts();
       products.assignAll(res);
     } catch (e) {
+      // ignore
     } finally {
-      loading.value = false;
+      Future.delayed(Duration.zero, () => loading.value = false);
     }
   }
 
-  Future<void> listByCategory(String categoryId) async {
-    loading.value = true;
+  Future<List<Product>> list() async {
+    return await _service.getProducts();
+  }
+
+  Future<List<Product>> listByCategory(String categoryId) async {
+    Future.delayed(Duration.zero, () => loading.value = true);
     try {
-      final res = await _service.listProductsByCategory(categoryId);
+      final res = await _service.getProductsByCategory(categoryId);
       products.assignAll(res);
+      return res;
+    } catch (e) {
+      return [];
     } finally {
-      loading.value = false;
+      Future.delayed(Duration.zero, () => loading.value = false);
     }
   }
 
-  Future<Product?> byId(String id) => _service.getProductById(id);
+  Future<Product?> byId(String id) async {
+    return await _service.getProductById(id);
+  }
 
-  Future<void> add(Product product) async {
-    final newProduct = await _service.addProduct(product);
-    products.insert(0, newProduct);
+  Future<void> add(Product newProduct) async {
+    Future.delayed(Duration.zero, () => loading.value = true);
+    try {
+      await _service.addProduct(newProduct);
+      products.insert(0, newProduct);
+    } catch (e) {
+      rethrow;
+    } finally {
+      Future.delayed(Duration.zero, () => loading.value = false);
+    }
   }
 }

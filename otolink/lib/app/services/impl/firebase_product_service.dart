@@ -1,109 +1,91 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../models/product.dart';
 import '../../models/product_category.dart';
-import '../../models/brand.dart';
 import '../product_service.dart';
 
 class FirebaseProductService implements ProductService {
-  final FirebaseFirestore _db;
-  FirebaseProductService({FirebaseFirestore? db}) : _db = db ?? FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> get _col => _db.collection('products');
+  CollectionReference<Map<String, dynamic>> get _products => _db.collection('products');
 
   Product _fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data()!;
     
-    final createdRaw = d['createdAt'];
-    final createdAt = createdRaw is Timestamp ? createdRaw.toDate() : DateTime.now();
-    
-    final yearRaw = d['year'];
-    final DateTime year = yearRaw is int
-        ? DateTime(yearRaw, 1, 1)
-        : (yearRaw is Timestamp ? yearRaw.toDate() : DateTime(DateTime.now().year));
-        
-    final brands = ((d['brands'] as List<dynamic>?) ?? const [])
-        .map((e) => e is Map<String, dynamic>
-            ? Brand(id: (e['id'] as String?) ?? '', name: (e['name'] as String?) ?? '-')
-            : null)
-        .whereType<Brand>()
-        .toList();
-        
-    final attrsRaw = d['attributes'];
-    final Map<String, dynamic> attrs = attrsRaw is Map<String, dynamic> ? Map<String, dynamic>.from(attrsRaw) : <String, dynamic>{};
+    dynamic yearData = d['year'];
+    DateTime yearDate;
+    if (yearData is int) {
+      yearDate = DateTime(yearData);
+    } else if (yearData is Timestamp) {
+      yearDate = yearData.toDate();
+    } else {
+      yearDate = DateTime.now();
+    }
 
     return Product(
       id: doc.id,
-      title: (d['title'] as String?) ?? '',
-      description: (d['description'] as String?) ?? '',
+      title: d['title'] ?? '',
+      description: d['description'] ?? '',
       price: (d['price'] as num?)?.toDouble() ?? 0.0,
-      category: _categoryFromMap(d['category']),
-      brands: brands,
-      images: (d['images'] as List<dynamic>? ?? const []).cast<String>(),
-      year: year,
-      sellerId: (d['sellerId'] as String?) ?? '',
-      createdAt: createdAt,
-      location: d['location'] as String?,
-      attributes: attrs,
+      category: ProductCategory(
+        id: d['category']?['id'] ?? '',
+        name: d['category']?['name'] ?? '',
+        icon: d['category']?['icon'] ?? '',
+      ),
+      brands: [], 
+      images: List<String>.from(d['images'] ?? []),
+      year: yearDate,
+      sellerId: d['sellerId'] ?? '',
+      createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      location: d['location'],
+      attributes: d['attributes'] ?? {},
     );
   }
 
-  ProductCategory _categoryFromMap(dynamic raw) {
-    if (raw is Map<String, dynamic>) {
-      return ProductCategory(
-        id: (raw['id'] as String?) ?? '',
-        name: (raw['name'] as String?) ?? '-',
-        icon: (raw['icon'] as String?) ?? '',
-      );
-    }
-    // Fallback jika tersimpan sebagai string
-    if (raw is String) {
-      return ProductCategory(id: raw, name: raw, icon: '');
-    }
-    return const ProductCategory(id: '', name: '-', icon: '');
+  @override
+  Future<List<Product>> getProducts() async {
+    final snap = await _products.orderBy('createdAt', descending: true).get();
+    return snap.docs.map(_fromDoc).toList();
   }
 
-  Map<String, dynamic> _toMap(Product p) => {
-        'title': p.title,
-        'description': p.description,
-        'price': p.price,
-        'category': {
-          'id': p.category.id,
-          'name': p.category.name,
-          'icon': p.category.icon,
-        },
-        'brands': p.brands.map((b) => {'id': b.id, 'name': b.name}).toList(),
-        'images': p.images,
-        'sellerId': p.sellerId,
-        'createdAt': FieldValue.serverTimestamp(),
-        'location': p.location,
-        'year': p.year.year, 
-        'attributes': p.attributes,
-      };
-
   @override
-  Future<Product> addProduct(Product product) async {
-    final ref = await _col.add(_toMap(product));
-    final doc = await ref.get();
-    return _fromDoc(doc);
+  Future<List<Product>> getProductsByCategory(String categoryId) async {
+    final snap = await _products
+        .where('category.id', isEqualTo: categoryId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(_fromDoc).toList();
   }
 
   @override
   Future<Product?> getProductById(String id) async {
-    final doc = await _col.doc(id).get();
-    if (!doc.exists || doc.data() == null) return null;
-    return _fromDoc(doc);
+    try {
+      final doc = await _products.doc(id).get();
+      if (doc.exists) {
+        return _fromDoc(doc);
+      }
+    } catch (e) {
+      print("Error fetching product by ID: $e");
+    }
+    return null;
   }
 
   @override
-  Future<List<Product>> listProducts() async {
-    final q = await _col.orderBy('createdAt', descending: true).limit(30).get();
-    return q.docs.map(_fromDoc).toList();
-  }
-
-  @override
-  Future<List<Product>> listProductsByCategory(String categoryId) async {
-    final q = await _col.where('category.id', isEqualTo: categoryId).orderBy('createdAt', descending: true).get();
-    return q.docs.map(_fromDoc).toList();
+  Future<void> addProduct(Product product) async {
+    await _products.add({
+      'title': product.title,
+      'description': product.description,
+      'price': product.price,
+      'category': {
+        'id': product.category.id,
+        'name': product.category.name,
+        'icon': product.category.icon,
+      },
+      'images': product.images,
+      'year': product.year != null ? Timestamp.fromDate(product.year!) : FieldValue.serverTimestamp(),
+      'sellerId': product.sellerId,
+      'createdAt': FieldValue.serverTimestamp(),
+      'location': product.location,
+      'attributes': product.attributes,
+    });
   }
 }

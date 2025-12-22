@@ -1,8 +1,8 @@
 import '../models/product.dart';
 
 abstract class ProductService {
-  Future<List<Product>> listProducts();
-  Future<List<Product>> listProductsByCategory(String categoryId);
+  Future<List<Product>> getProducts();
+  Future<List<Product>> getProductsByCategory(String categoryId);
   Future<Product?> getProductById(String id);
-  Future<Product> addProduct(Product product);
+  Future<void> addProduct(Product product);
 }

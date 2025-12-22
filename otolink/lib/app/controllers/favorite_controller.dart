@@ -1,54 +1,53 @@
 import 'package:get/get.dart';
 import '../services/favorite_service.dart';
-import '../services/auth_service.dart';
+import '../controllers/auth_controller.dart'; 
 import '../models/product.dart';
 import '../services/product_service.dart';
 
 class FavoriteController extends GetxController {
   final FavoriteService _service;
-  final AuthService _authService;
+  final AuthController _authController;
   final ProductService _productService;
 
-  FavoriteController(this._service, this._authService, this._productService);
+  FavoriteController(this._service, this._authController, this._productService);
 
-  final RxList<String> favoriteIds = <String>[].obs;
-  final RxList<Product> favoriteProducts = <Product>[].obs;
-  final RxBool isLoading = false.obs;
+  List<String> favoriteIds = [];
+  List<Product> favoriteProducts = [];
+  bool isLoading = false;
 
   @override
   void onInit() {
     super.onInit();
-    loadFavorites();
-  }
-
-  Future<void> loadFavorites() async {
-    final user = _authService.currentUser;
-    if (user == null) return;
-
-    try {
-      final ids = await _service.getFavoriteProductIds(user.id);
-      favoriteIds.assignAll(ids);
-    } catch (e) {
+    if (_authController.currentUser.value != null) {
+      loadFavoriteProducts();
     }
   }
 
   Future<void> loadFavoriteProducts() async {
-    final user = _authService.currentUser;
+    final user = _authController.currentUser.value;
     if (user == null) return;
 
-    isLoading.value = true;
+    isLoading = true;
+    update();
+
     try {
+      print("DEBUG_CTRL: Fetching...");
       final ids = await _service.getFavoriteProductIds(user.id);
-      favoriteIds.assignAll(ids);
+      favoriteIds = ids;
 
       final List<Product> products = [];
       for (var id in ids) {
         final p = await _productService.getProductById(id);
         if (p != null) products.add(p);
       }
-      favoriteProducts.assignAll(products);
+      
+      favoriteProducts = products;
+      print("DEBUG_CTRL: Done. Count: ${favoriteProducts.length}");
+    } catch (e) {
+      print("DEBUG_CTRL: Error $e");
     } finally {
-      isLoading.value = false;
+      isLoading = false;
+      update();
     }
   }
 
@@ -56,20 +55,31 @@ class FavoriteController extends GetxController {
     return favoriteIds.contains(productId);
   }
 
-  Future<void> toggleFavorite(String productId) async {
-    final user = _authService.currentUser;
+  Future<void> toggleFavorite(Product product) async {
+    final user = _authController.currentUser.value;
     if (user == null) {
-      Get.snackbar('Info', 'Silakan login untuk menyimpan favorit');
+      Get.snackbar('Info', 'Silakan login');
       return;
     }
 
-    if (isFav(productId)) {
-      favoriteIds.remove(productId);
-      await _service.removeFavorite(user.id, productId);
-      favoriteProducts.removeWhere((p) => p.id == productId);
+    if (isFav(product.id)) {
+      favoriteIds.remove(product.id);
+      favoriteProducts.removeWhere((p) => p.id == product.id);
+      update();
+      try {
+        await _service.removeFavorite(user.id, product.id);
+      } catch (e) {
+        loadFavoriteProducts(); 
+      }
     } else {
-      favoriteIds.add(productId);
-      await _service.addFavorite(user.id, productId);
+      favoriteIds.add(product.id);
+      favoriteProducts.add(product);
+      update();
+      try {
+        await _service.addFavorite(user.id, product.id);
+      } catch (e) {
+        loadFavoriteProducts();
+      }
     }
   }
 }

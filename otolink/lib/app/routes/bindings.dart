@@ -33,14 +33,16 @@ class AppBinding extends Bindings {
     Get.put<FavoriteService>(FirebaseFavoriteService(), permanent: true);
 
     Get.put(AuthController(Get.find<AuthService>()), permanent: true);
+    
     Get.put(ProductController(Get.find<ProductService>()), permanent: true);
     Get.put(ChatController(Get.find<ChatService>(), Get.find<AuthService>()), permanent: true);
     Get.put(ProfileController(Get.find<AuthService>()), permanent: true);
     Get.put(CategoryController(Get.find<CategoryService>()), permanent: true);
     Get.put(ProductPhotoController(Get.find<ImageStorageService>()));
+    
     Get.put(FavoriteController(
       Get.find<FavoriteService>(), 
-      Get.find<AuthService>(),
+      Get.find<AuthController>(),
       Get.find<ProductService>(),
     ), permanent: true);
   }
