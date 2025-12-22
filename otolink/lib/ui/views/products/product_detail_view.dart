@@ -70,8 +70,9 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
             foregroundColor: Colors.black87,
             actions: [
               IconButton(icon: const Icon(Icons.share), onPressed: () {}),
-
+              
               GetBuilder<FavoriteController>(
+                init: Get.isRegistered<FavoriteController>() ? Get.find<FavoriteController>() : null,
                 builder: (favCtrl) {
                   final isFav = favCtrl.isFav(p.id);
                   return GestureDetector(

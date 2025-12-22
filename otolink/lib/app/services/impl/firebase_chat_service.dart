@@ -1,118 +1,66 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../models/chat_thread.dart';
-import '../../models/message.dart';
+import '../../models/chat_message.dart';
 import '../chat_service.dart';
 
 class FirebaseChatService implements ChatService {
-  final FirebaseFirestore _db;
-  FirebaseChatService({FirebaseFirestore? db}) : _db = db ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> get _threads => _db.collection('threads');
-
-  String _threadKey(List<String> participantIds) {
-    final sorted = [...participantIds]..sort();
-    return sorted.join('_');
-  }
-
-  ChatThread _threadFromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final d = doc.data()!;
-    Message? lastMsg;
-    
-    if (d['lastMessage'] != null && d['lastMessage'] is Map) {
-      final lm = d['lastMessage'] as Map<String, dynamic>;
-      lastMsg = Message(
-        id: 'last',
-        threadId: doc.id,
-        senderId: lm['senderId'] ?? '',
-        text: lm['text'] ?? '',
-        timestamp: (d['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      );
-    }
-
-    return ChatThread(
-      id: doc.id,
-      participantIds: List<String>.from(d['participantIds'] ?? []),
-      lastMessage: lastMsg,
-      updatedAt: (d['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    );
-  }
-
-  Message _messageFromDoc(DocumentSnapshot<Map<String, dynamic>> doc, String threadId) {
-    final d = doc.data()!;
-    return Message(
-      id: doc.id,
-      threadId: threadId,
-      senderId: (d['senderId'] as String?) ?? '',
-      text: (d['text'] as String?) ?? '',
-      timestamp: (d['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    );
-  }
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   @override
   Future<List<ChatThread>> listThreads(String userId) async {
-    final q = await _threads.where('participantIds', arrayContains: userId).get();
-    final threads = q.docs.map(_threadFromDoc).toList();
-    threads.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    return threads;
+    final snap = await _db.collection('threads')
+        .where('participants', arrayContains: userId)
+        .get();
+        
+    return snap.docs.map((d) => ChatThread.fromMap(d.data(), d.id)).toList();
   }
 
   @override
-  Stream<List<Message>> messagesStream(String threadId) {
-    return _threads.doc(threadId).collection('messages').snapshots().map((q) {
-      final msgs = q.docs.map((d) => _messageFromDoc(d, threadId)).toList();
-      // Sort message terbaru di paling bawah (ascending) atau paling atas (descending)
-      // Kita pakai Descending (terbaru di index 0) untuk ListView(reverse: true)
-      msgs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      return msgs;
-    });
-  }
+  Future<ChatThread> startThread(List<String> userIds) async {
+    final snap = await _db.collection('threads')
+        .where('participants', arrayContains: userIds.first)
+        .get();
 
-  @override
-  Future<ChatThread> startThread(List<String> participantIds) async {
-    final key = _threadKey(participantIds);
-    final q = await _threads.where('key', isEqualTo: key).limit(1).get();
-    
-    if (q.docs.isNotEmpty) {
-      return _threadFromDoc(q.docs.first);
+    for (var doc in snap.docs) {
+      final List<dynamic> participants = doc['participants'];
+      if (participants.contains(userIds.last)) {
+        return ChatThread.fromMap(doc.data(), doc.id);
+      }
     }
 
-    final ref = await _threads.add({
-      'participantIds': participantIds,
-      'key': key,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'lastMessage': null,
+    final doc = await _db.collection('threads').add({
+      'participants': userIds,
+      'lastMessage': '',
+      'lastMessageTime': FieldValue.serverTimestamp(),
     });
-    
-    final snap = await ref.get();
-    return _threadFromDoc(snap);
+
+    return ChatThread(
+      id: doc.id,
+      participants: userIds,
+      lastMessage: '',
+      lastMessageTime: DateTime.now(),
+    );
   }
 
   @override
-  Future<Message> sendMessage({required String threadId, required String senderId, required String text}) async {
-    final msgRef = _threads.doc(threadId).collection('messages').doc();
+  Future<void> sendMessage(String threadId, ChatMessage message) async {
+    await _db.collection('threads').doc(threadId).collection('messages').add(message.toMap());
     
-    final msgData = {
-      'senderId': senderId,
-      'text': text,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
-
-    final batch = _db.batch();
-    batch.set(msgRef, msgData);
-    batch.update(_threads.doc(threadId), {
-      'updatedAt': FieldValue.serverTimestamp(),
-      'lastMessage': msgData,
+    await _db.collection('threads').doc(threadId).update({
+      'lastMessage': message.text,
+      'lastMessageTime': FieldValue.serverTimestamp(),
     });
+  }
 
-    await batch.commit();
-
-    return Message(
-      id: msgRef.id,
-      threadId: threadId,
-      senderId: senderId,
-      text: text,
-      timestamp: DateTime.now(),
-    );
+  @override
+  Stream<List<ChatMessage>> messageStream(String threadId) {
+    return _db.collection('threads')
+        .doc(threadId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => ChatMessage.fromMap(d.data(), d.id))
+            .toList());
   }
 }

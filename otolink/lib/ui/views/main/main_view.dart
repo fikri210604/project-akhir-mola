@@ -6,7 +6,6 @@ import '../chat/chat_list_view.dart';
 import '../products/add_product_view.dart';
 import '../favorites/favorite_list_view.dart';
 import '../profile/profile_view.dart';
-import '../../../app/controllers/favorite_controller.dart';
 
 class MainView extends StatefulWidget {
   const MainView({super.key});
@@ -18,36 +17,37 @@ class MainView extends StatefulWidget {
 class _MainViewState extends State<MainView> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ChatListView(),
-    const SizedBox(), 
-    FavoriteListView(),
-    const ProfilePage(),
-  ];
-
   void _onItemTapped(int index) {
     if (index == 2) return; 
 
     setState(() {
       _currentIndex = index;
     });
-
-    if (index == 3) {
-      print("DEBUG_MAIN: Force Loading Favorites...");
-      try {
-        Get.find<FavoriteController>().loadFavoriteProducts();
-      } catch (e) {
-        print("Error: $e");
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    Widget currentBody;
+    
+    switch (_currentIndex) {
+      case 0:
+        currentBody = const HomePage();
+        break;
+      case 1:
+        currentBody = const ChatListView();
+        break;
+      case 3:
+        currentBody = FavoriteListView(key: UniqueKey());
+        break;
+      case 4:
+        currentBody = const ProfilePage();
+        break;
+      default:
+        currentBody = const HomePage();
+    }
+
     return Scaffold(
-      body: _pages[_currentIndex],
-      
+      body: currentBody,
       floatingActionButton: FloatingActionButton(
         onPressed: () => Get.to(() => const AddProductView()),
         backgroundColor: Colors.white,

@@ -1,63 +1,78 @@
 import 'package:get/get.dart';
-
-import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../models/user.dart';
 
 class AuthController extends GetxController {
-  final AuthService _service;
-  final Rxn<AppUser> currentUser = Rxn<AppUser>();
+  final AuthService _authService;
+  
+  AuthController(this._authService);
 
-  AuthController(this._service) {
-    currentUser.value = _service.currentUser;
+  final Rx<AppUser?> currentUser = Rx<AppUser?>(null);
+  final RxBool isLoading = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    currentUser.bindStream(_authService.authStateChanges);
   }
 
-  Future<void> signInAnonymously(String? displayName) async {
-    final user = await _service.signInAnonymously(displayName: displayName);
-    currentUser.value = user;
+  Future<void> login(String email, String password) async {
+    await signInWithEmail(email, password);
   }
 
-  Future<void> signOut() async {
-    await _service.signOut();
-    currentUser.value = null;
+  Future<void> register(String email, String password, String name) async {
+    await signUpWithEmail(email, password, name);
   }
+
+  Future<void> logout() async {
+    await _authService.signOut();
+  }
+
 
   Future<void> signInWithEmail(String email, String password) async {
-    final user = await _service.signInWithEmailPassword(email: email, password: password);
-    currentUser.value = user;
+    isLoading.value = true;
+    try {
+      await _authService.signInWithEmail(email, password);
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  Future<void> registerWithEmail({required String email, required String password, String? displayName}) async {
-    final user = await _service.registerWithEmailPassword(email: email, password: password, displayName: displayName);
-    currentUser.value = user;
+  Future<void> signUpWithEmail(String email, String password, String name) async {
+    isLoading.value = true;
+    try {
+      await _authService.signUpWithEmail(email, password, name);
+    } finally {
+      isLoading.value = false;
+    }
   }
-
-  Future<void> sendPasswordReset(String email) => _service.sendPasswordResetEmail(email);
 
   Future<void> signInWithGoogle() async {
-    final user = await _service.signInWithGoogle();
-    currentUser.value = user;
-  }
-
-  Future<String> startPhoneAuth(String phoneNumber) async {
-    final result = await _service.requestPhoneVerification(phoneNumber);
-    if (result.isEmpty) {
-      currentUser.value = _service.currentUser;
+    isLoading.value = true;
+    try {
+      await _authService.signInWithGoogle();
+    } finally {
+      isLoading.value = false;
     }
-    return result;
   }
 
-  Future<void> confirmSmsCode(String verificationId, String smsCode) async {
-    final user = await _service.verifySmsCode(verificationId: verificationId, smsCode: smsCode);
-    currentUser.value = user;
+  Future<void> sendPasswordReset(String email) async {
+    await _authService.sendPasswordReset(email);
+  }
+
+  Future<String> startPhoneAuth(String phone) async {
+    return await _authService.startPhoneAuth(phone);
+  }
+
+  Future<void> confirmSmsCode(String verificationId, String code) async {
+    await _authService.confirmSmsCode(verificationId, code);
+  }
+
+  Future<void> updateDisplayName(String name) async {
+    await _authService.updateDisplayName(name);
   }
 
   Future<void> linkEmailPassword(String email, String password) async {
-    await _service.linkEmailPassword(email: email, password: password);
-  }
-
-  Future<void> updateDisplayName(String displayName) async {
-    await _service.updateDisplayName(displayName);
-    final user = _service.currentUser;
-    currentUser.value = user;
+    await _authService.linkEmailPassword(email, password);
   }
 }

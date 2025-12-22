@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 
@@ -18,14 +18,14 @@ class ProductController extends GetxController {
   }
 
   Future<void> refreshProducts() async {
-    Future.delayed(Duration.zero, () => loading.value = true);
+    loading.value = true;
     try {
       final res = await _service.getProducts();
       products.assignAll(res);
     } catch (e) {
-      // ignore
+      print("Error loading products: $e");
     } finally {
-      Future.delayed(Duration.zero, () => loading.value = false);
+      loading.value = false;
     }
   }
 
@@ -34,7 +34,7 @@ class ProductController extends GetxController {
   }
 
   Future<List<Product>> listByCategory(String categoryId) async {
-    Future.delayed(Duration.zero, () => loading.value = true);
+    loading.value = true;
     try {
       final res = await _service.getProductsByCategory(categoryId);
       products.assignAll(res);
@@ -42,7 +42,7 @@ class ProductController extends GetxController {
     } catch (e) {
       return [];
     } finally {
-      Future.delayed(Duration.zero, () => loading.value = false);
+      loading.value = false;
     }
   }
 
@@ -51,14 +51,31 @@ class ProductController extends GetxController {
   }
 
   Future<void> add(Product newProduct) async {
-    Future.delayed(Duration.zero, () => loading.value = true);
+    loading.value = true;
     try {
       await _service.addProduct(newProduct);
       products.insert(0, newProduct);
+      products.refresh();
     } catch (e) {
       rethrow;
     } finally {
-      Future.delayed(Duration.zero, () => loading.value = false);
+      loading.value = false;
+    }
+  }
+
+  Future<void> deleteProduct(String productId) async {
+    loading.value = true;
+    try {
+      await FirebaseFirestore.instance.collection('products').doc(productId).delete();
+      
+      products.removeWhere((p) => p.id == productId);
+      products.refresh();
+      
+      Get.snackbar('Sukses', 'Produk berhasil dihapus');
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal menghapus produk: $e');
+    } finally {
+      loading.value = false;
     }
   }
 }

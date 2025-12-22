@@ -35,7 +35,12 @@ class AppBinding extends Bindings {
     Get.put(AuthController(Get.find<AuthService>()), permanent: true);
     
     Get.put(ProductController(Get.find<ProductService>()), permanent: true);
-    Get.put(ChatController(Get.find<ChatService>(), Get.find<AuthService>()), permanent: true);
+    
+    Get.put(ChatController(
+      Get.find<ChatService>(), 
+      Get.find<AuthController>()
+    ), permanent: true);
+
     Get.put(ProfileController(Get.find<AuthService>()), permanent: true);
     Get.put(CategoryController(Get.find<CategoryService>()), permanent: true);
     Get.put(ProductPhotoController(Get.find<ImageStorageService>()));

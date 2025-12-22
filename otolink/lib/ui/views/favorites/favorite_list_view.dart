@@ -4,37 +4,53 @@ import '../../../app/controllers/favorite_controller.dart';
 import '../../../app/routes/routes.dart';
 import '../../widgets/ngrok_image.dart';
 
-class FavoriteListView extends GetView<FavoriteController> {
+class FavoriteListView extends StatefulWidget {
   const FavoriteListView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    if (!Get.isRegistered<FavoriteController>()) {
-      print("DEBUG_VIEW: Controller belum ada, UI mungkin error");
-    } else {
-      controller.loadFavoriteProducts();
-    }
+  State<FavoriteListView> createState() => _FavoriteListViewState();
+}
 
+class _FavoriteListViewState extends State<FavoriteListView> {
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<FavoriteController>()) {
+        Get.find<FavoriteController>().loadFavoriteProducts();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Favorit Saya"),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Get.back(), 
+          ),
+        ],
       ),
       backgroundColor: Colors.white,
       body: GetBuilder<FavoriteController>(
-        builder: (ctrl) {
-          print("DEBUG_VIEW: Rebuild UI. Data Count: ${ctrl.favoriteProducts.length}");
-
-          if (ctrl.isLoading) {
+        init: Get.isRegistered<FavoriteController>() ? Get.find<FavoriteController>() : null,
+        builder: (controller) {
+          
+          if (controller.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (ctrl.favoriteProducts.isEmpty) {
+          if (controller.favoriteProducts.isEmpty) {
             return RefreshIndicator(
-              onRefresh: () async => await ctrl.loadFavoriteProducts(),
+              onRefresh: () async => await controller.loadFavoriteProducts(),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
@@ -45,7 +61,6 @@ class FavoriteListView extends GetView<FavoriteController> {
                         Icon(Icons.favorite_border, size: 64, color: Colors.grey),
                         SizedBox(height: 16),
                         Text("Belum ada favorit"),
-                        Text("Pastikan Anda sudah login dan menekan tombol hati"),
                       ],
                     ),
                   ),
@@ -55,13 +70,14 @@ class FavoriteListView extends GetView<FavoriteController> {
           }
 
           return RefreshIndicator(
-            onRefresh: () async => await ctrl.loadFavoriteProducts(),
+            onRefresh: () async => await controller.loadFavoriteProducts(),
             child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-              itemCount: ctrl.favoriteProducts.length,
+              itemCount: controller.favoriteProducts.length,
               separatorBuilder: (_, __) => const Divider(),
               itemBuilder: (context, index) {
-                final p = ctrl.favoriteProducts[index];
+                final p = controller.favoriteProducts[index];
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: ClipRRect(
@@ -81,7 +97,7 @@ class FavoriteListView extends GetView<FavoriteController> {
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.grey),
-                    onPressed: () => ctrl.toggleFavorite(p),
+                    onPressed: () => controller.toggleFavorite(p),
                   ),
                   onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
                 );

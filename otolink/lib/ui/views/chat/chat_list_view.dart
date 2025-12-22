@@ -43,6 +43,7 @@ class _ChatListViewState extends State<ChatListView> {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final thread = controller.threadList[index];
+            
             final lastMsg = thread.lastMessage;
             
             return ListTile(
@@ -52,7 +53,7 @@ class _ChatListViewState extends State<ChatListView> {
               ),
               title: const Text('User', style: TextStyle(fontWeight: FontWeight.bold)), 
               subtitle: Text(
-                lastMsg?.text ?? 'Mulai percakapan...',
+                lastMsg.isNotEmpty ? lastMsg : 'Mulai percakapan...',
                 maxLines: 1, 
                 overflow: TextOverflow.ellipsis
               ),

@@ -1,29 +1,38 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-
-import '../models/chat_thread.dart';
-import '../models/message.dart';
 import '../services/chat_service.dart';
-import '../services/auth_service.dart';
+import '../controllers/auth_controller.dart'; 
+import '../models/chat_thread.dart';
+import '../models/chat_message.dart';
 
 class ChatController extends GetxController {
   final ChatService _service;
-  final AuthService _authService;
-  
-  ChatController(this._service, this._authService);
+  final AuthController _authController;
+
+  ChatController(this._service, this._authController);
 
   final RxList<ChatThread> threadList = <ChatThread>[].obs;
-  final RxList<Message> messageList = <Message>[].obs;
   
-  final RxBool isLoading = false.obs; 
-  final RxBool isMessagesLoading = true.obs; 
-  final RxBool isSending = false.obs;
-  
+  final RxList<ChatMessage> _currentMessages = <ChatMessage>[].obs;
+  List<ChatMessage> get messageList => _currentMessages;
+
   final TextEditingController messageController = TextEditingController();
-  
-  String? _currentThreadId;
+
+  final RxBool isLoading = false.obs;
   StreamSubscription? _msgSub;
+  String? _currentThreadId;
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (_authController.currentUser.value != null) {
+      loadThreads();
+    }
+    ever(_authController.currentUser, (user) {
+      if (user != null) loadThreads();
+    });
+  }
 
   @override
   void onClose() {
@@ -31,36 +40,27 @@ class ChatController extends GetxController {
     messageController.dispose();
     super.onClose();
   }
-  
+
   Future<void> loadThreads() async {
-    final user = _authService.currentUser;
+    final user = _authController.currentUser.value;
     if (user == null) return;
 
     isLoading.value = true;
     try {
       final res = await _service.listThreads(user.id);
       threadList.assignAll(res);
+    } catch (e) {
+      print("Error loading threads: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
   void initChat(String threadId) {
-    if (_currentThreadId == threadId) return;
-
     _currentThreadId = threadId;
-    messageList.clear();
-    isMessagesLoading.value = true;
-    
     _msgSub?.cancel();
-    _msgSub = _service.messagesStream(threadId).listen((msgs) {
-      Future.delayed(Duration.zero, () {
-        if (isClosed) return;
-        messageList.assignAll(msgs);
-        isMessagesLoading.value = false;
-      });
-    }, onError: (e) {
-      isMessagesLoading.value = false;
+    _msgSub = _service.messageStream(threadId).listen((msgs) {
+      _currentMessages.assignAll(msgs);
     });
   }
 
@@ -68,26 +68,30 @@ class ChatController extends GetxController {
     final text = messageController.text.trim();
     if (text.isEmpty || _currentThreadId == null) return;
 
-    final user = _authService.currentUser;
+    final user = _authController.currentUser.value;
     if (user == null) return;
 
     messageController.clear();
+
     try {
       await _service.sendMessage(
-        threadId: _currentThreadId!, 
-        senderId: user.id, 
-        text: text
+        _currentThreadId!,
+        ChatMessage(
+          id: '',
+          senderId: user.id,
+          text: text,
+          timestamp: DateTime.now(),
+        ),
       );
     } catch (e) {
-      Get.snackbar('Error', 'Gagal mengirim pesan');
+      print("Error sending message: $e");
     }
   }
 
   Future<ChatThread> createThread(String otherUserId) async {
-    final currentUser = _authService.currentUser;
-    if (currentUser == null) {
-      throw Exception('User not logged in');
-    }
+    final currentUser = _authController.currentUser.value;
+    if (currentUser == null) throw Exception("User not logged in");
+    
     return await _service.startThread([currentUser.id, otherUserId]);
   }
 }
