@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 
@@ -23,7 +23,7 @@ class ProductController extends GetxController {
       final res = await _service.getProducts();
       products.assignAll(res);
     } catch (e) {
-      print("Error loading products: $e");
+      debugPrint("Error loading products: $e");
     } finally {
       loading.value = false;
     }
@@ -54,8 +54,23 @@ class ProductController extends GetxController {
     loading.value = true;
     try {
       await _service.addProduct(newProduct);
-      products.insert(0, newProduct);
-      products.refresh();
+      refreshProducts();
+    } catch (e) {
+      rethrow;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  Future<void> edit(Product updatedProduct) async {
+    loading.value = true;
+    try {
+      await _service.updateProduct(updatedProduct);
+      final index = products.indexWhere((p) => p.id == updatedProduct.id);
+      if (index != -1) {
+        products[index] = updatedProduct;
+        products.refresh();
+      }
     } catch (e) {
       rethrow;
     } finally {
@@ -66,16 +81,41 @@ class ProductController extends GetxController {
   Future<void> deleteProduct(String productId) async {
     loading.value = true;
     try {
-      await FirebaseFirestore.instance.collection('products').doc(productId).delete();
-      
+      await _service.deleteProduct(productId);
       products.removeWhere((p) => p.id == productId);
-      products.refresh();
-      
-      Get.snackbar('Sukses', 'Produk berhasil dihapus');
     } catch (e) {
-      Get.snackbar('Error', 'Gagal menghapus produk: $e');
+      debugPrint("Error deleting product: $e");
     } finally {
       loading.value = false;
+    }
+  }
+
+  Future<void> markAsSold(String productId) async {
+    try {
+      await _service.updateStatus(productId, ProductStatus.sold);
+      final index = products.indexWhere((p) => p.id == productId);
+      if (index != -1) {
+        final old = products[index];
+        products[index] = Product(
+          id: old.id,
+          title: old.title,
+          description: old.description,
+          price: old.price,
+          category: old.category,
+          brands: old.brands,
+          images: old.images,
+          year: old.year,
+          sellerId: old.sellerId,
+          createdAt: old.createdAt,
+          location: old.location,
+          attributes: old.attributes,
+          status: ProductStatus.sold,
+        );
+        products.refresh();
+      }
+    } catch (e) {
+      debugPrint("Error updating status: $e");
+      Get.snackbar('Error', 'Gagal memperbarui status produk');
     }
   }
 }

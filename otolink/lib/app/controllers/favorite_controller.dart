@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../services/favorite_service.dart';
 import '../controllers/auth_controller.dart'; 
@@ -54,7 +55,7 @@ class FavoriteController extends GetxController {
       
       favoriteProducts = products;
     } catch (e) {
-      print("Error loading favs: $e");
+      debugPrint("Error loading favs: $e");
     } finally {
       isLoading = false;
       update();

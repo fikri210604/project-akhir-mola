@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/controllers/product_controller.dart';
 import '../../../app/controllers/auth_controller.dart';
+import '../../../app/models/product.dart';
 import '../../../app/routes/routes.dart';
 import '../../widgets/ngrok_image.dart';
 
@@ -36,7 +37,7 @@ class MyProductsView extends StatelessWidget {
               children: [
                 Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade300),
                 const SizedBox(height: 16),
-                const Text("Anda belum menjual produk apapun"),
+                const Text("Belum ada produk yang dijual", style: TextStyle(color: Colors.grey)),
               ],
             ),
           );
@@ -48,6 +49,8 @@ class MyProductsView extends StatelessWidget {
           separatorBuilder: (_, __) => const Divider(),
           itemBuilder: (context, index) {
             final p = myProducts[index];
+            final isSold = p.status == ProductStatus.sold;
+
             return ListTile(
               contentPadding: EdgeInsets.zero,
               leading: ClipRRect(
@@ -55,32 +58,110 @@ class MyProductsView extends StatelessWidget {
                 child: SizedBox(
                   width: 60,
                   height: 60,
-                  child: p.images.isNotEmpty
-                      ? NgrokImage(imageUrl: p.images.first, fit: BoxFit.cover)
-                      : Container(color: Colors.grey[200], child: const Icon(Icons.image)),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      p.images.isNotEmpty
+                          ? NgrokImage(imageUrl: p.images.first, fit: BoxFit.cover)
+                          : Container(color: Colors.grey[200], child: const Icon(Icons.image)),
+                      if (isSold)
+                        Container(
+                          color: Colors.black54,
+                          alignment: Alignment.center,
+                          child: const Text(
+                            "SOLD",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-              title: Text(p.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: Text(
+                p.title, 
+                maxLines: 1, 
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  decoration: isSold ? TextDecoration.lineThrough : null,
+                  color: isSold ? Colors.grey : Colors.black,
+                ),
+              ),
               subtitle: Text(
                 "Rp ${p.price.toStringAsFixed(0)}",
-                style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: isSold ? Colors.grey : Colors.indigo, 
+                  fontWeight: FontWeight.bold
+                ),
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: () {
-                  Get.defaultDialog(
-                    title: "Hapus Produk",
-                    middleText: "Apakah Anda yakin ingin menghapus produk ini?",
-                    textConfirm: "Hapus",
-                    textCancel: "Batal",
-                    confirmTextColor: Colors.white,
-                    buttonColor: Colors.red,
-                    onConfirm: () async {
-                      Get.back();
-                      await productCtrl.deleteProduct(p.id);
-                    }
-                  );
+              trailing: PopupMenuButton<String>(
+                onSelected: (value) async {
+                  if (value == 'edit') {
+                    Get.toNamed(AppRoutes.editProduct, arguments: p); 
+                  } else if (value == 'sold') {
+                    Get.defaultDialog(
+                      title: "Konfirmasi",
+                      middleText: "Tandai produk ini sebagai terjual?",
+                      textConfirm: "Ya, Terjual",
+                      textCancel: "Batal",
+                      confirmTextColor: Colors.white,
+                      onConfirm: () {
+                        Get.back();
+                        productCtrl.markAsSold(p.id);
+                      },
+                    );
+                  } else if (value == 'delete') {
+                    Get.defaultDialog(
+                      title: "Hapus Produk",
+                      middleText: "Apakah Anda yakin ingin menghapus produk ini?",
+                      textConfirm: "Hapus",
+                      textCancel: "Batal",
+                      confirmTextColor: Colors.white,
+                      buttonColor: Colors.red,
+                      onConfirm: () async {
+                        Get.back();
+                        await productCtrl.deleteProduct(p.id);
+                      }
+                    );
+                  }
                 },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  if (!isSold)
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text('Edit Produk'),
+                        ],
+                      ),
+                    ),
+                  if (!isSold)
+                    const PopupMenuItem<String>(
+                      value: 'sold',
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle_outline, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text('Tandai Terjual'),
+                        ],
+                      ),
+                    ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Hapus Produk'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
             );

@@ -22,6 +22,9 @@ class SignupFlowController {
     try {
       final id = await Get.find<AuthController>().startPhoneAuth(phone);
       verificationId = id.isEmpty ? null : id;
+      
+      if (!context.mounted) return null;
+
       if (id.isEmpty) {
         _snack(context, 'Nomor terverifikasi otomatis');
       } else {
@@ -29,7 +32,7 @@ class SignupFlowController {
       }
       return id;
     } catch (e) {
-      _snack(context, e.toString());
+      if (context.mounted) _snack(context, e.toString());
       return null;
     }
   }
@@ -46,10 +49,10 @@ class SignupFlowController {
     }
     try {
       await Get.find<AuthController>().confirmSmsCode(verificationId!, code);
-      _snack(context, 'OTP terverifikasi');
+      if (context.mounted) _snack(context, 'OTP terverifikasi');
       return true;
     } catch (e) {
-      _snack(context, e.toString());
+      if (context.mounted) _snack(context, e.toString());
       return false;
     }
   }
@@ -87,7 +90,7 @@ class SignupFlowController {
       await auth.linkEmailPassword(email, password);
       return true;
     } catch (e) {
-      _snack(context, e.toString());
+      if (context.mounted) _snack(context, e.toString());
       return false;
     }
   }

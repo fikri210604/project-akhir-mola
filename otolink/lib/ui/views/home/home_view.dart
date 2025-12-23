@@ -275,7 +275,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12.withOpacity(0.1),
+            color: Colors.black12.withValues(alpha: 0.1),
             blurRadius: 12,
             spreadRadius: 1,
             offset: const Offset(0, 6),
@@ -378,7 +378,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
-          BoxShadow(color: Colors.black12.withOpacity(0.05), blurRadius: 4),
+          BoxShadow(color: Colors.black12.withValues(alpha: 0.05), blurRadius: 4),
         ],
       ),
       child: Column(

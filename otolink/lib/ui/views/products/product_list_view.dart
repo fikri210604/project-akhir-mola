@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../app/models/product.dart';
 import '../../../app/controllers/product_controller.dart';
 import '../../../app/routes/routes.dart';
 import '../../widgets/ngrok_image.dart';

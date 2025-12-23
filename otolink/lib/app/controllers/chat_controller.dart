@@ -50,7 +50,7 @@ class ChatController extends GetxController {
       final res = await _service.listThreads(user.id);
       threadList.assignAll(res);
     } catch (e) {
-      print("Error loading threads: $e");
+      debugPrint("Error loading threads: $e");
     } finally {
       isLoading.value = false;
     }
@@ -64,14 +64,16 @@ class ChatController extends GetxController {
     });
   }
 
-  Future<void> sendMessage() async {
-    final text = messageController.text.trim();
+  Future<void> sendMessage({String? customText}) async {
+    final text = customText ?? messageController.text.trim();
     if (text.isEmpty || _currentThreadId == null) return;
 
     final user = _authController.currentUser.value;
     if (user == null) return;
 
-    messageController.clear();
+    if (customText == null) {
+      messageController.clear();
+    }
 
     try {
       await _service.sendMessage(
@@ -84,7 +86,7 @@ class ChatController extends GetxController {
         ),
       );
     } catch (e) {
-      print("Error sending message: $e");
+      debugPrint("Error sending message: $e");
     }
   }
 

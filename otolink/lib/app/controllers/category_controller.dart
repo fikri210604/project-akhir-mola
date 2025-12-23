@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../models/product_category.dart';
@@ -43,7 +44,7 @@ class CategoryController extends GetxController {
       final list = await _service.listFields(categoryId);
       fields.assignAll(list);
     } catch (e) {
-      print("Error loading fields: $e");
+      debugPrint("Error loading fields: $e");
     } finally {
       fieldsLoading.value = false;
     }

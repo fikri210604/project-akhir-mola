@@ -1,6 +1,12 @@
 import 'product_category.dart';
 import 'brand.dart';
 
+enum ProductStatus {
+  available,
+  booked,
+  sold,
+}
+
 class Product {
   final String id;
   final String title;
@@ -13,6 +19,7 @@ class Product {
   final String sellerId;
   final DateTime createdAt;
   final String? location;
+  final ProductStatus status;
 
   final Map<String, dynamic> attributes;
 
@@ -29,5 +36,6 @@ class Product {
     required this.createdAt,
     this.attributes = const {},
     this.location,
+    this.status = ProductStatus.available,
   });
 }

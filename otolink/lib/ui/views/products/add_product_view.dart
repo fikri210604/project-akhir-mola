@@ -146,6 +146,7 @@ class _AddProductViewState extends State<AddProductView> {
       );
       Get.back();
     } catch (e) {
+      if (!mounted) return; 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal: $e')),
       );
@@ -405,6 +406,7 @@ class _AddProductViewState extends State<AddProductView> {
         _photos.addAll(files);
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal memilih foto: $e')));
     }
   }

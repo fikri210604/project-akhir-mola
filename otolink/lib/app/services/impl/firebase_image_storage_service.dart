@@ -39,7 +39,7 @@ class HttpImageStorageService implements ImageStorageService {
         return json['url'];
       }
     } catch (e) {
-      print('Http Upload Error: $e');
+      debugPrint('Http Upload Error: $e');
       return '';
     }
     return '';

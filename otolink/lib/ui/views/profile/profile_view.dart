@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/controllers/auth_controller.dart';
 import '../../../app/routes/routes.dart';
-import '../products/my_products_view.dart';
-import '../auth/login_view.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class ProfileView extends StatelessWidget {
+  const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,120 +14,114 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               const SizedBox(height: 20),
               Obx(() {
                 final user = authCtrl.currentUser.value;
                 if (user == null) {
-                  return Column(
-                    children: [
-                      const CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.grey,
-                        child: Icon(Icons.person, size: 50, color: Colors.white),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => Get.to(() => const LoginPage()),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0A2C6C),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text("Login / Register"),
-                      ),
-                    ],
-                  );
+                  return const SizedBox.shrink();
                 }
-                
-                final hasPhoto = user.photoUrl != null && user.photoUrl!.isNotEmpty;
-                
                 return Column(
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: const Color(0xFF0A2C6C),
-                      backgroundImage: hasPhoto
-                          ? NetworkImage(user.photoUrl!) 
-                          : null,
-                      child: !hasPhoto
-                          ? Text(
-                              user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                              style: const TextStyle(fontSize: 32, color: Colors.white),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      user.name,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      user.email,
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.black,
-                        elevation: 0,
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFF0A2C6C), width: 2),
                       ),
-                      child: const Text("Edit Profil"),
+                      child: const CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white,
+                        backgroundImage: AssetImage('assets/images/logo.png'), 
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      user.name.isNotEmpty ? user.name : "Pengguna Otolink",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0A2C6C),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.email.isNotEmpty ? user.email : (user.phoneNumber ?? '-'),
+                      style: const TextStyle(color: Colors.grey),
                     ),
                   ],
                 );
               }),
 
+              const SizedBox(height: 30),
+
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    _buildMenuItem(
+                      icon: Icons.settings_outlined,
+                      title: "Pengaturan Akun",
+                      onTap: () => Get.toNamed(AppRoutes.settings),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMenuItem(
+                      icon: Icons.help_outline,
+                      title: "Pusat Bantuan",
+                      onTap: () => Get.toNamed(AppRoutes.help),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMenuItem(
+                      icon: Icons.info_outline,
+                      title: "Tentang Aplikasi",
+                      onTap: () {
+                        Get.defaultDialog(
+                          title: "Tentang Otolink",
+                          content: const Column(
+                            children: [
+                              Icon(Icons.car_repair, size: 48, color: Color(0xFF0A2C6C)),
+                              SizedBox(height: 12),
+                              Text("Versi 1.0.0", style: TextStyle(color: Colors.grey)),
+                              SizedBox(height: 8),
+                              Text(
+                                "Otolink adalah platform jual beli kendaraan terpercaya.",
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                          confirmTextColor: Colors.white,
+                          textConfirm: "Tutup",
+                          buttonColor: const Color(0xFF0A2C6C),
+                          onConfirm: () => Get.back(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
               const SizedBox(height: 40),
 
-              _buildMenuTile(
-                icon: Icons.inventory_2_outlined,
-                title: "Produk Saya",
-                onTap: () {
-                  final user = authCtrl.currentUser.value;
-                  if (user == null) {
-                    Get.to(() => const LoginPage());
-                  } else {
-                    Get.to(() => const MyProductsView());
-                  }
-                },
-              ),
-              
-              _buildMenuTile(
-                icon: Icons.settings_outlined,
-                title: "Pengaturan",
-                onTap: () {},
-              ),
-              
-              _buildMenuTile(
-                icon: Icons.help_outline,
-                title: "Bantuan",
-                onTap: () {},
-              ),
-
-              Obx(() {
-                if (authCtrl.currentUser.value != null) {
-                  return Column(
-                    children: [
-                      const Divider(),
-                      _buildMenuTile(
-                        icon: Icons.logout,
-                        title: "Keluar",
-                        color: Colors.red,
-                        onTap: () {
-                          authCtrl.logout();
-                          Get.offAllNamed(AppRoutes.login);
-                        },
-                      ),
-                    ],
+              TextButton.icon(
+                onPressed: () {
+                  Get.defaultDialog(
+                    title: "Keluar",
+                    middleText: "Yakin ingin keluar?",
+                    textConfirm: "Ya",
+                    textCancel: "Tidak",
+                    confirmTextColor: Colors.white,
+                    buttonColor: Colors.red,
+                    onConfirm: () async {
+                      await authCtrl.logout();
+                      Get.offAllNamed(AppRoutes.login);
+                    },
                   );
-                }
-                return const SizedBox();
-              }),
+                },
+                icon: const Icon(Icons.logout, color: Colors.red),
+                label: const Text("Keluar", style: TextStyle(color: Colors.red)),
+              ),
+              
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -137,28 +129,56 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuTile({
-    required IconData icon, 
-    required String title, 
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
     required VoidCallback onTap,
-    Color color = Colors.black87
   }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
+    return Material(
+      color: Colors.grey.shade50,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: const Color(0xFF0A2C6C), size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+            ],
+          ),
         ),
-        child: Icon(icon, color: color),
       ),
-      title: Text(
-        title, 
-        style: TextStyle(fontWeight: FontWeight.w500, color: color)
-      ),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-      onTap: onTap,
     );
   }
 }

@@ -11,6 +11,8 @@ class AppTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final Color? labelColor;
   final Color? primaryColor;
+  final String? Function(String?)? validator;
+  final int maxLines;
 
   const AppTextField({
     super.key,
@@ -24,6 +26,8 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.labelColor,
     this.primaryColor,
+    this.validator,
+    this.maxLines = 1,
   });
 
   @override
@@ -52,11 +56,13 @@ class _AppTextFieldState extends State<AppTextField> {
               color: widget.labelColor,
             )),
         const SizedBox(height: 6),
-        TextField(
+        TextFormField(
           controller: widget.controller,
           keyboardType: widget.keyboardType,
           obscureText: _obscure,
           onChanged: widget.onChanged,
+          validator: widget.validator,
+          maxLines: widget.maxLines,
           decoration: InputDecoration(
             hintText: widget.hint,
             errorText: widget.errorText,

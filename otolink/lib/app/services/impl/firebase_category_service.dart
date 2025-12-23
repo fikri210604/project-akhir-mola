@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../models/product_category.dart';
 import '../../models/category_field.dart';
@@ -63,9 +64,15 @@ class FirebaseCategoryService implements CategoryService {
         return q.docs.map(_fieldFromDoc).toList();
       }
     } catch (e) {
+      debugPrint("Error loading fields (ordered): $e");
     }
     
-    final qFallback = await _col.doc(categoryId).collection('fields').get();
-    return qFallback.docs.map(_fieldFromDoc).toList();
+    try {
+      final qFallback = await _col.doc(categoryId).collection('fields').get();
+      return qFallback.docs.map(_fieldFromDoc).toList();
+    } catch (e) {
+      debugPrint("Error loading fields (fallback): $e");
+      return [];
+    }
   }
 }

@@ -100,7 +100,7 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCarousel(p.images),
+                _buildCarousel(p.images, p.status),
                 const SizedBox(height: 20),
                 _buildPriceSection(p),
                 const Divider(height: 32),
@@ -121,7 +121,7 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
     );
   }
 
-  Widget _buildCarousel(List<String> images) {
+  Widget _buildCarousel(List<String> images, ProductStatus status) {
     return SizedBox(
       width: double.infinity,
       height: 260,
@@ -151,6 +151,30 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
               },
             ),
           ),
+          if (status == ProductStatus.sold)
+            Container(
+              color: Colors.black54,
+              alignment: Alignment.center,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.red, width: 4),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    "TERJUAL",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           if (images.length > 1)
             Positioned(
               bottom: 12, left: 0, right: 0,
@@ -262,14 +286,16 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
   }
 
   Widget _buildBottomBar(Product p) {
+    final isSold = p.status == ProductStatus.sold;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
       ),
       child: ElevatedButton.icon(
-        onPressed: () async {
+        onPressed: isSold ? null : () async {
           final authCtrl = Get.find<AuthController>();
           if (authCtrl.currentUser.value == null) {
             Get.toNamed(AppRoutes.login);
@@ -282,18 +308,24 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
           try {
             final chatCtrl = Get.find<ChatController>();
             final thread = await chatCtrl.createThread(p.sellerId);
+            
+            chatCtrl.initChat(thread.id);
+            await chatCtrl.sendMessage(
+              customText: "Halo, saya tertarik dengan ${p.title} seharga Rp ${p.price.toStringAsFixed(0)}."
+            );
+
             Get.toNamed(AppRoutes.chatRoom, arguments: thread.id);
           } catch (e) {
             Get.snackbar('Error', 'Gagal memulai chat: $e');
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.indigo,
+          backgroundColor: isSold ? Colors.grey : Colors.indigo,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         icon: const Icon(Icons.chat),
-        label: const Text('Chat Penjual'),
+        label: Text(isSold ? 'Produk Telah Terjual' : 'Chat Penjual'),
       ),
     );
   }

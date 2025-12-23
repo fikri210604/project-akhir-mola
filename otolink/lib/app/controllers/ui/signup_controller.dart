@@ -31,7 +31,7 @@ class SignupController {
       return;
     }
     try {
-      await Get.find<AuthController>().registerWithEmail(email: email, password: password, displayName: username);
+      await Get.find<AuthController>().register(email, password, username);
       Get.offAll(() => const RootGate());
     } catch (e) {
       _snack(e.toString());

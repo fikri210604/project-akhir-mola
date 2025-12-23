@@ -39,7 +39,7 @@ class _NavigationState extends State<Navigation> {
         currentBody = FavoriteListView(key: UniqueKey());
         break;
       case 4:
-        currentBody = const ProfilePage();
+        currentBody = const ProfileView();
         break;
       default:
         currentBody = const HomePage();

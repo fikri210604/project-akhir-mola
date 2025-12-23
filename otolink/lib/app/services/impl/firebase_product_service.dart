@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/product.dart';
 import '../../models/product_category.dart';
 import '../product_service.dart';
@@ -36,8 +37,9 @@ class FirebaseProductService implements ProductService {
       year: yearDate,
       sellerId: d['sellerId'] ?? '',
       createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      location: d['location'],
       attributes: d['attributes'] ?? {},
+      location: d['location'],
+      status: ProductStatus.values[d['status'] ?? 0],
     );
   }
 
@@ -64,7 +66,7 @@ class FirebaseProductService implements ProductService {
         return _fromDoc(doc);
       }
     } catch (e) {
-      print("Error fetching product by ID: $e");
+      debugPrint("Error fetching product by ID: $e");
     }
     return null;
   }
@@ -81,11 +83,33 @@ class FirebaseProductService implements ProductService {
         'icon': product.category.icon,
       },
       'images': product.images,
-      'year': product.year != null ? Timestamp.fromDate(product.year!) : FieldValue.serverTimestamp(),
+      'year': Timestamp.fromDate(product.year),
       'sellerId': product.sellerId,
       'createdAt': FieldValue.serverTimestamp(),
-      'location': product.location,
       'attributes': product.attributes,
+      'location': product.location,
+      'status': product.status.index,
+    });
+  }
+
+  @override
+  Future<void> deleteProduct(String id) async {
+    await _products.doc(id).delete();
+  }
+
+  @override
+  Future<void> updateStatus(String id, ProductStatus status) async {
+    await _products.doc(id).update({'status': status.index});
+  }
+
+  @override
+  Future<void> updateProduct(Product product) async {
+    await _products.doc(product.id).update({
+      'title': product.title,
+      'description': product.description,
+      'price': product.price,
+      'location': product.location,
+      'year': Timestamp.fromDate(product.year),
     });
   }
 }
