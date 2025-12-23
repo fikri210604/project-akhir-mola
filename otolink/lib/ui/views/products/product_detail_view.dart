@@ -46,9 +46,10 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final id = Get.arguments;
-    if (id is! String) return const Scaffold(body: Center(child: Text("Produk tidak ditemukan")));
+    if (id is! String) return Scaffold(body: Center(child: Text('not_found'.tr)));
 
     final ctrl = Get.find<ProductController>();
+    final theme = Theme.of(context);
 
     return FutureBuilder<Product?>(
       future: ctrl.byId(id),
@@ -58,16 +59,16 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
         }
 
         final p = snap.data;
-        if (p == null) return const Scaffold(body: Center(child: Text("Produk tidak ditemukan")));
+        if (p == null) return Scaffold(body: Center(child: Text('not_found'.tr)));
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
-            title: const Text("Detail Produk"),
+            title: Text('detail_product'.tr),
             centerTitle: true,
             elevation: 0.3,
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black87,
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            foregroundColor: theme.appBarTheme.foregroundColor,
             actions: [
               IconButton(icon: const Icon(Icons.share), onPressed: () {}),
               
@@ -86,7 +87,7 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
                         scale: _favScaleAnim.drive(Tween(begin: 1.0, end: 1.5)),
                         child: Icon(
                           isFav ? Icons.favorite : Icons.favorite_border,
-                          color: isFav ? Colors.pink : Colors.grey,
+                          color: isFav ? Colors.pink : theme.iconTheme.color,
                           size: 26,
                         ),
                       ),
@@ -102,20 +103,20 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
               children: [
                 _buildCarousel(p.images, p.status),
                 const SizedBox(height: 20),
-                _buildPriceSection(p),
+                _buildPriceSection(p, theme),
                 const Divider(height: 32),
-                _buildLocation(p),
+                _buildLocation(p, theme),
                 const Divider(height: 32),
-                _buildDetailSpecs(p),
+                _buildDetailSpecs(p, theme),
                 const Divider(height: 32),
-                _buildDescription(p),
+                _buildDescription(p, theme),
                 const Divider(height: 32),
-                _buildSeller(p),
+                _buildSeller(p, theme),
                 const SizedBox(height: 20),
               ],
             ),
           ),
-          bottomNavigationBar: _buildBottomBar(p),
+          bottomNavigationBar: _buildBottomBar(p, theme),
         );
       },
     );
@@ -163,9 +164,9 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
                     border: Border.all(color: Colors.red, width: 4),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
-                    "TERJUAL",
-                    style: TextStyle(
+                  child: Text(
+                    'sold'.tr,
+                    style: const TextStyle(
                       color: Colors.red,
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -199,15 +200,15 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
     );
   }
 
-  Widget _buildPriceSection(Product p) {
+  Widget _buildPriceSection(Product p, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Rp ${p.price.toStringAsFixed(0)}", style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.indigo)),
+          Text("Rp ${p.price.toStringAsFixed(0)}", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
           const SizedBox(height: 6),
-          Text(p.title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+          Text(p.title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)),
           const SizedBox(height: 4),
           Text(p.category.name, style: const TextStyle(color: Colors.grey)),
         ],
@@ -215,31 +216,31 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
     );
   }
 
-  Widget _buildLocation(Product p) {
+  Widget _buildLocation(Product p, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           const Icon(Icons.location_on, size: 18, color: Colors.grey),
           const SizedBox(width: 6),
-          Text(p.location ?? "Lokasi tidak tersedia", style: const TextStyle(color: Colors.grey)),
+          Text(p.location ?? 'location_na'.tr, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
   }
 
-  Widget _buildDetailSpecs(Product p) {
+  Widget _buildDetailSpecs(Product p, ThemeData theme) {
     final specs = <Widget>[];
-    final base = {"Kategori": p.category.name, "Tahun": p.year.year, if (p.location != null) "Lokasi": p.location!};
-    base.forEach((k, v) => specs.add(_specItem(k, v.toString())));
-    p.attributes.forEach((k, v) => specs.add(_specItem(_labelize(k), v.toString())));
+    final base = {'categories'.tr: p.category.name, 'year'.tr: p.year.year, if (p.location != null) 'location'.tr: p.location!};
+    base.forEach((k, v) => specs.add(_specItem(k, v.toString(), theme)));
+    p.attributes.forEach((k, v) => specs.add(_specItem(_labelize(k), v.toString(), theme)));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Detail", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          Text('detail'.tr, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
           const SizedBox(height: 10),
           ...specs,
         ],
@@ -247,7 +248,7 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
     );
   }
 
-  Widget _specItem(String title, String value) {
+  Widget _specItem(String title, String value, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -255,7 +256,7 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
         children: [
           Text(title, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
           const SizedBox(width: 10),
-          Expanded(child: Text(value, textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w700))),
+          Expanded(child: Text(value, textAlign: TextAlign.end, style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface))),
         ],
       ),
     );
@@ -263,36 +264,40 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
 
   String _labelize(String key) => key.replaceAll("_", " ").split(" ").map((e) => e.isEmpty ? e : e[0].toUpperCase() + e.substring(1)).join(" ");
 
-  Widget _buildDescription(Product p) {
+  Widget _buildDescription(Product p, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Deskripsi", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          Text('description'.tr, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
           const SizedBox(height: 10),
-          Text(p.description, style: const TextStyle(fontSize: 14, height: 1.5)),
+          Text(p.description, style: TextStyle(fontSize: 14, height: 1.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
         ],
       ),
     );
   }
   
-  Widget _buildSeller(Product p) {
+  Widget _buildSeller(Product p, ThemeData theme) {
     return ListTile(
-      leading: const CircleAvatar(child: Icon(Icons.person)),
-      title: Text(p.sellerId),
-      subtitle: const Text("Penjual"),
+      leading: CircleAvatar(
+        backgroundColor: theme.colorScheme.primaryContainer,
+        child: Icon(Icons.person, color: theme.colorScheme.onPrimaryContainer),
+      ),
+      title: Text(p.sellerId, style: TextStyle(color: theme.colorScheme.onSurface)),
+      subtitle: Text('seller'.tr, style: const TextStyle(color: Colors.grey)),
     );
   }
 
-  Widget _buildBottomBar(Product p) {
+  Widget _buildBottomBar(Product p, ThemeData theme) {
     final isSold = p.status == ProductStatus.sold;
+    final isDark = theme.brightness == Brightness.dark;
     
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
+        color: theme.cardColor,
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0 : 0.05), blurRadius: 10, offset: const Offset(0, -5))],
       ),
       child: ElevatedButton.icon(
         onPressed: isSold ? null : () async {
@@ -302,7 +307,7 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
             return;
           }
           if (p.sellerId == authCtrl.currentUser.value!.id) {
-            Get.snackbar('Info', 'Ini produk Anda sendiri');
+            Get.snackbar('Info', 'own_product'.tr);
             return;
           }
           try {
@@ -320,12 +325,12 @@ class _ProductDetailViewState extends State<ProductDetailView> with SingleTicker
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: isSold ? Colors.grey : Colors.indigo,
+          backgroundColor: isSold ? Colors.grey : theme.colorScheme.primary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         icon: const Icon(Icons.chat),
-        label: Text(isSold ? 'Produk Telah Terjual' : 'Chat Penjual'),
+        label: Text(isSold ? 'product_sold'.tr : 'chat_seller'.tr),
       ),
     );
   }

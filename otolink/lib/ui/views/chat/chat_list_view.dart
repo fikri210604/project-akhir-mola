@@ -26,17 +26,22 @@ class _ChatListViewState extends State<ChatListView> {
   @override
   Widget build(BuildContext context) {
     final currentUser = authCtrl.currentUser.value;
+    final theme = Theme.of(context);
+
     if (currentUser == null) return Center(child: Text('please_login'.tr));
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('messages'.tr),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        foregroundColor: theme.appBarTheme.foregroundColor,
         elevation: 0.5,
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
+          IconButton(
+            onPressed: () {}, 
+            icon: Icon(Icons.search, color: theme.iconTheme.color)
+          ),
         ],
       ),
       body: Obx(() {
@@ -49,7 +54,7 @@ class _ChatListViewState extends State<ChatListView> {
 
         return ListView.separated(
           itemCount: chatCtrl.threadList.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
+          separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor),
           itemBuilder: (_, index) {
             final thread = chatCtrl.threadList[index];
             final otherId = thread.participants.firstWhere((id) => id != currentUser.id, orElse: () => '?');
@@ -57,17 +62,18 @@ class _ChatListViewState extends State<ChatListView> {
             return ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                child: Icon(Icons.person, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                backgroundColor: theme.colorScheme.primaryContainer,
+                child: Icon(Icons.person, color: theme.colorScheme.onPrimaryContainer),
               ),
               title: Text(
                 "${'user'.tr} $otherId", 
-                style: const TextStyle(fontWeight: FontWeight.w600)
+                style: TextStyle(fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)
               ),
               subtitle: Text(
                 thread.lastMessage.isEmpty ? 'start_conversation'.tr : thread.lastMessage,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
               ),
               trailing: Text(
                 DateFormat('HH:mm').format(thread.lastMessageTime),
