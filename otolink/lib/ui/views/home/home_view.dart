@@ -20,7 +20,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String selectedCity = 'Lokasi';
+  String selectedCity = '';
   bool isLoading = false;
   late final CategoryController _categoryCtrl;
   late final ProductController _productCtrl;
@@ -49,8 +49,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -71,19 +73,19 @@ class _HomePageState extends State<HomePage> {
                 _buildBannerSection(),
                 const SizedBox(height: 20),
 
-                _buildSectionTitle("Kategori"),
+                _buildSectionTitle('categories'.tr),
                 const SizedBox(height: 10),
 
                 _buildCategorySection(),
                 const SizedBox(height: 20),
 
-                _buildSectionTitle("Rekomendasi"),
+                _buildSectionTitle('recommendation'.tr),
                 const SizedBox(height: 10),
 
                 _buildRecommendationCarousel(),
                 const SizedBox(height: 20),
 
-                _buildSectionTitle("Produk Terbaru"),
+                _buildSectionTitle('newest_products'.tr),
                 const SizedBox(height: 10),
 
                 _buildNewestProducts(),
@@ -96,6 +98,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -106,7 +109,7 @@ class _HomePageState extends State<HomePage> {
             child: Image.asset(
               'assets/images/logo.png', 
               width: 40,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.car_repair, size: 40, color: Color(0xFF0A2C6C)),
+              errorBuilder: (_, __, ___) => Icon(Icons.car_repair, size: 40, color: theme.colorScheme.primary),
             ),
           ),
 
@@ -116,45 +119,48 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(width: 4),
 
               Text(
-                selectedCity,
-                style: const TextStyle(
-                  color: Colors.black87,
+                selectedCity.isEmpty ? 'location'.tr : selectedCity,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w500,
                 ),
               ),
 
               if (isLoading)
-                const Padding(
-                  padding: EdgeInsets.only(left: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
                   child: SizedBox(
                     width: 15,
                     height: 15,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFF0A2C6C),
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                 ),
 
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.refresh,
-                  color: Color(0xFF0A2C6C),
+                  color: theme.colorScheme.primary,
                   size: 20,
                 ),
-                tooltip: "Perbarui lokasi",
+                tooltip: "Refresh location",
                 onPressed: refreshLocation,
               ),
             ],
           ),
 
-          const Icon(Icons.notifications_none, color: Colors.black54, size: 26),
+          Icon(Icons.notifications_none, size: 26, color: theme.iconTheme.color ?? Colors.grey),
         ],
       ),
     );
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: InkWell(
@@ -165,18 +171,18 @@ class _HomePageState extends State<HomePage> {
           height: 48,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade400),
+            border: Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade400),
             borderRadius: BorderRadius.circular(12),
-            color: Colors.white,
+            color: theme.cardColor,
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.search, color: Colors.grey),
-              SizedBox(width: 10),
+              const Icon(Icons.search, color: Colors.grey),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  "Temukan Mobil, Motor, dll...",
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                  'search_hint'.tr,
+                  style: const TextStyle(color: Colors.grey, fontSize: 14),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -212,15 +218,23 @@ class _HomePageState extends State<HomePage> {
               margin: const EdgeInsets.only(right: 12, left: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.grey.shade200,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 image: DecorationImage(
                   image: AssetImage(banners[index]),
                   fit: BoxFit.cover,
-                  onError: (exception, stackTrace) {},
+                  onError: (_, __) {},
                 ),
               ),
-              child: const Center(
-                child: Text('Promo Banner', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 10, color: Colors.black)])),
+              child: Center(
+                child: Text(
+                  'promo_banner'.tr, 
+                  style: const TextStyle(
+                    color: Colors.white, 
+                    fontSize: 24, 
+                    fontWeight: FontWeight.bold, 
+                    shadows: [Shadow(blurRadius: 10, color: Colors.black)]
+                  ),
+                ),
               ),
             );
           },
@@ -246,7 +260,7 @@ class _HomePageState extends State<HomePage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (cats.isEmpty) {
-            return const Center(child: Text('Belum ada kategori'));
+            return Center(child: Text('no_category'.tr));
           }
           return ListView.separated(
             scrollDirection: Axis.horizontal,
@@ -257,7 +271,7 @@ class _HomePageState extends State<HomePage> {
               final c = cats[index];
               return GestureDetector(
                 onTap: () => Get.to(() => CategoryProductsView(category: c)),
-                child: _categoryCard(CategoryIconOptions.iconOf(c.icon), c.name),
+                child: _categoryCard(CategoryIconOptions.iconOf(c.icon), c.name.toLowerCase().tr),
               );
             },
           );
@@ -267,15 +281,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _categoryCard(IconData icon, String title) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: 120,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12.withValues(alpha: 0.1),
+            color: Colors.black12.withValues(alpha: isDark ? 0 : 0.1),
             blurRadius: 12,
             spreadRadius: 1,
             offset: const Offset(0, 6),
@@ -285,13 +302,13 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 36, color: const Color(0xFF0A2C6C)),
+          Icon(icon, size: 36, color: theme.colorScheme.primary),
           const SizedBox(height: 8),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF0A2C6C),
+            style: TextStyle(
+              color: theme.colorScheme.primary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -317,7 +334,7 @@ class _HomePageState extends State<HomePage> {
 
           final allProducts = _productCtrl.products;
           if (allProducts.isEmpty) {
-            return const Center(child: Text('Belum ada rekomendasi'));
+            return Center(child: Text('no_recommendation'.tr));
           }
 
           final randomList = List.of(allProducts)..shuffle(Random());
@@ -328,7 +345,7 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: recommendations.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
+            itemBuilder: (_, index) {
               final p = recommendations[index];
               return GestureDetector(
                 onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
@@ -361,24 +378,30 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF0A2C6C),
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );
   }
 
   Widget _productCard(String title, String price, String imageUrl, String location) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
         boxShadow: [
-          BoxShadow(color: Colors.black12.withValues(alpha: 0.05), blurRadius: 4),
+          BoxShadow(
+            color: Colors.black12.withValues(alpha: isDark ? 0 : 0.05), 
+            blurRadius: 4
+          ),
         ],
       ),
       child: Column(
@@ -389,7 +412,7 @@ class _HomePageState extends State<HomePage> {
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.grey.shade100,
+                color: theme.colorScheme.surfaceContainerHighest,
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -410,8 +433,8 @@ class _HomePageState extends State<HomePage> {
             price,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF0A2C6C),
+            style: TextStyle(
+              color: theme.colorScheme.primary,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),

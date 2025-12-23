@@ -46,7 +46,7 @@ class _ProductListViewState extends State<ProductListView> {
         itemCount: items.length,
         padding: const EdgeInsets.only(bottom: 20),
         separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
+        itemBuilder: (_, index) {
           final p = items[index];
           Widget leading;
           

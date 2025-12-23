@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+
 import '../../../app/controllers/chat_controller.dart';
+import '../../../app/controllers/auth_controller.dart';
 import '../../../app/routes/routes.dart';
 
 class ChatListView extends StatefulWidget {
@@ -11,51 +14,64 @@ class ChatListView extends StatefulWidget {
 }
 
 class _ChatListViewState extends State<ChatListView> {
-  final controller = Get.find<ChatController>();
+  final chatCtrl = Get.find<ChatController>();
+  final authCtrl = Get.find<AuthController>();
 
   @override
   void initState() {
     super.initState();
-    controller.loadThreads();
+    chatCtrl.loadThreads();
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = authCtrl.currentUser.value;
+    if (currentUser == null) return Center(child: Text('please_login'.tr));
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Pesan", style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
+        title: Text('messages'.tr),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        elevation: 0.5,
+        actions: [
+          IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
+        ],
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (chatCtrl.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
-
-        if (controller.threadList.isEmpty) {
-          return const Center(child: Text('Belum ada percakapan'));
+        if (chatCtrl.threadList.isEmpty) {
+          return Center(child: Text('no_messages'.tr));
         }
 
         return ListView.separated(
-          itemCount: controller.threadList.length,
+          itemCount: chatCtrl.threadList.length,
           separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final thread = controller.threadList[index];
-            
-            final lastMsg = thread.lastMessage;
+          itemBuilder: (_, index) {
+            final thread = chatCtrl.threadList[index];
+            final otherId = thread.participants.firstWhere((id) => id != currentUser.id, orElse: () => '?');
             
             return ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFF0A2C6C),
-                child: Icon(Icons.person, color: Colors.white),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              leading: CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                child: Icon(Icons.person, color: Theme.of(context).colorScheme.onPrimaryContainer),
               ),
-              title: const Text('User', style: TextStyle(fontWeight: FontWeight.bold)), 
+              title: Text(
+                "${'user'.tr} $otherId", 
+                style: const TextStyle(fontWeight: FontWeight.w600)
+              ),
               subtitle: Text(
-                lastMsg.isNotEmpty ? lastMsg : 'Mulai percakapan...',
-                maxLines: 1, 
-                overflow: TextOverflow.ellipsis
+                thread.lastMessage.isEmpty ? 'start_conversation'.tr : thread.lastMessage,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Text(
+                DateFormat('HH:mm').format(thread.lastMessageTime),
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
               onTap: () {
                 Get.toNamed(AppRoutes.chatRoom, arguments: thread.id);

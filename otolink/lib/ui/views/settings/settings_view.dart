@@ -12,30 +12,24 @@ class SettingsView extends StatefulWidget {
 
 class _SettingsViewState extends State<SettingsView> {
   bool _notifEnabled = true;
-  bool _darkMode = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Pengaturan"),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0A2C6C),
+        title: Text('settings'.tr),
         elevation: 0.5,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildSectionHeader("Akun"),
+          _buildSectionHeader('account'.tr),
           _buildListTile(
             icon: Icons.person_outline,
-            title: "Edit Profil",
-            subtitle: "Ubah nama, foto, dan info lainnya",
+            title: 'edit_profile'.tr,
+            subtitle: 'edit_profile_desc'.tr,
             onTap: () {
-              Get.snackbar("Info", "Fitur Edit Profil akan segera hadir", 
-                backgroundColor: const Color(0xFF0A2C6C), 
-                colorText: Colors.white,
+              Get.snackbar('settings'.tr, 'info_feature'.tr, 
                 snackPosition: SnackPosition.BOTTOM,
                 margin: const EdgeInsets.all(16)
               );
@@ -43,50 +37,47 @@ class _SettingsViewState extends State<SettingsView> {
           ),
           _buildListTile(
             icon: Icons.lock_outline,
-            title: "Keamanan",
-            subtitle: "Ubah kata sandi dan verifikasi",
+            title: 'security'.tr,
+            subtitle: 'security_desc'.tr,
             onTap: () {},
           ),
           const Divider(height: 32),
-          _buildSectionHeader("Preferensi"),
+          _buildSectionHeader('preferences'.tr),
           SwitchListTile(
-            activeThumbColor: const Color(0xFF0A2C6C),
+            activeTrackColor: Theme.of(context).colorScheme.primary,
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            title: const Text("Notifikasi Push", style: TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: const Text("Terima notifikasi promo dan chat", style: TextStyle(fontSize: 12, color: Colors.grey)),
-            secondary: Icon(Icons.notifications_outlined, color: _notifEnabled ? const Color(0xFF0A2C6C) : Colors.grey),
+            title: Text('push_notif'.tr, style: const TextStyle(fontWeight: FontWeight.w500)),
+            subtitle: Text('push_notif_desc'.tr, style: const TextStyle(fontSize: 12)),
+            secondary: Icon(Icons.notifications_outlined, color: _notifEnabled ? Theme.of(context).colorScheme.primary : Colors.grey),
             value: _notifEnabled,
             onChanged: (val) {
               setState(() => _notifEnabled = val);
               Get.snackbar(
-                "Sukses", 
-                val ? "Notifikasi diaktifkan" : "Notifikasi dimatikan",
+                'success'.tr, 
+                val ? 'notif_on'.tr : 'notif_off'.tr,
                 snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: Colors.black87,
-                colorText: Colors.white,
                 duration: const Duration(seconds: 1),
               );
             },
           ),
           SwitchListTile(
-            activeThumbColor: const Color(0xFF0A2C6C),
+            activeTrackColor: Theme.of(context).colorScheme.primary,
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            title: const Text("Mode Gelap", style: TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: const Text("Sesuaikan tampilan aplikasi", style: TextStyle(fontSize: 12, color: Colors.grey)),
-            secondary: Icon(Icons.dark_mode_outlined, color: _darkMode ? const Color(0xFF0A2C6C) : Colors.grey),
-            value: _darkMode,
+            title: Text('dark_mode'.tr, style: const TextStyle(fontWeight: FontWeight.w500)),
+            subtitle: Text('dark_mode_desc'.tr, style: const TextStyle(fontSize: 12)),
+            secondary: Icon(Icons.dark_mode_outlined, color: Get.isDarkMode ? Theme.of(context).colorScheme.primary : Colors.grey),
+            value: Get.isDarkMode,
             onChanged: (val) {
-              setState(() => _darkMode = val);
-              Get.changeTheme(val ? ThemeData.dark() : ThemeData.light());
+              Get.changeThemeMode(val ? ThemeMode.dark : ThemeMode.light);
             },
           ),
           const Divider(height: 32),
-          _buildSectionHeader("Lainnya"),
+          _buildSectionHeader('others'.tr),
           _buildListTile(
             icon: Icons.language,
-            title: "Bahasa",
-            subtitle: "Indonesia",
-            onTap: () {},
+            title: 'language'.tr,
+            subtitle: _getCurrentLangName(),
+            onTap: () => _showLanguageDialog(),
           ),
           const SizedBox(height: 20),
           Padding(
@@ -96,13 +87,12 @@ class _SettingsViewState extends State<SettingsView> {
               child: ElevatedButton.icon(
                 onPressed: () {
                   Get.defaultDialog(
-                    title: "Konfirmasi Keluar",
-                    middleText: "Apakah Anda yakin ingin keluar dari aplikasi?",
-                    textConfirm: "Ya, Keluar",
-                    textCancel: "Batal",
+                    title: 'logout_confirm'.tr,
+                    middleText: 'logout_msg'.tr,
+                    textConfirm: 'yes_logout'.tr,
+                    textCancel: 'cancel'.tr,
                     confirmTextColor: Colors.white,
                     buttonColor: Colors.redAccent,
-                    cancelTextColor: Colors.black87,
                     onConfirm: () async {
                       final auth = Get.find<AuthController>();
                       await auth.logout();
@@ -111,14 +101,14 @@ class _SettingsViewState extends State<SettingsView> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade50,
+                  backgroundColor: Colors.red.withValues(alpha: 0.1),
                   foregroundColor: Colors.red,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.logout),
-                label: const Text("Keluar Akun"),
+                label: Text('logout_account'.tr),
               ),
             ),
           ),
@@ -132,8 +122,8 @@ class _SettingsViewState extends State<SettingsView> {
       padding: const EdgeInsets.only(bottom: 12, left: 8),
       child: Text(
         title,
-        style: const TextStyle(
-          color: Color(0xFF0A2C6C),
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
@@ -152,15 +142,64 @@ class _SettingsViewState extends State<SettingsView> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFF0A2C6C).withValues(alpha: 0.1),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: const Color(0xFF0A2C6C), size: 22),
+        child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)) : null,
+      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12)) : null,
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
       onTap: onTap,
+    );
+  }
+
+  String _getCurrentLangName() {
+    final locale = Get.locale?.toString() ?? 'id_ID';
+    switch (locale) {
+      case 'id_ID': return 'Bahasa Indonesia';
+      case 'en_US': return 'English';
+      case 'de_DE': return 'Deutsch';
+      case 'ja_JP': return '日本語';
+      case 'ar_SA': return 'العربية';
+      default: return 'Bahasa Indonesia';
+    }
+  }
+
+  void _showLanguageDialog() {
+    Get.bottomSheet(
+      Container(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Text('🇮🇩'),
+              title: const Text('Bahasa Indonesia'),
+              onTap: () { Get.updateLocale(const Locale('id', 'ID')); Get.back(); setState((){}); },
+            ),
+            ListTile(
+              leading: const Text('🇺🇸'),
+              title: const Text('English'),
+              onTap: () { Get.updateLocale(const Locale('en', 'US')); Get.back(); setState((){}); },
+            ),
+            ListTile(
+              leading: const Text('🇩🇪'),
+              title: const Text('Deutsch'),
+              onTap: () { Get.updateLocale(const Locale('de', 'DE')); Get.back(); setState((){}); },
+            ),
+            ListTile(
+              leading: const Text('🇯🇵'),
+              title: const Text('日本語 (Japanese)'),
+              onTap: () { Get.updateLocale(const Locale('ja', 'JP')); Get.back(); setState((){}); },
+            ),
+            ListTile(
+              leading: const Text('🇸🇦'),
+              title: const Text('العربية (Arabic)'),
+              onTap: () { Get.updateLocale(const Locale('ar', 'SA')); Get.back(); setState((){}); },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

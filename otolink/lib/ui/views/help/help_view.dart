@@ -7,11 +7,8 @@ class HelpView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Pusat Bantuan"),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0A2C6C),
+        title: Text('help_center'.tr),
         elevation: 0.5,
       ),
       body: SingleChildScrollView(
@@ -19,74 +16,59 @@ class HelpView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Bagaimana kami bisa membantu?",
+            Text(
+              'help_title'.tr,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0A2C6C),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              "Temukan jawaban atas pertanyaan umum atau hubungi tim support kami.",
-              style: TextStyle(color: Colors.grey),
+            Text(
+              'help_subtitle'.tr,
+              style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 24),
-            const Text("FAQ (Pertanyaan Umum)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('faq'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
-            _buildExpansionTile(
-              "Bagaimana cara membeli mobil?",
-              "Pilih mobil yang Anda inginkan, klik tombol 'Chat Penjual' untuk berdiskusi, dan lakukan kesepakatan harga serta metode pembayaran langsung dengan penjual."
-            ),
-            _buildExpansionTile(
-              "Apakah transaksi di aplikasi ini aman?",
-              "Kami menyarankan untuk selalu melakukan pertemuan langsung (COD) di tempat aman dan mengecek kondisi kendaraan sebelum melakukan pembayaran."
-            ),
-            _buildExpansionTile(
-              "Bagaimana cara posting iklan?",
-              "Masuk ke menu 'Produk Saya' atau klik tombol (+) di halaman utama, isi detail kendaraan, unggah foto, dan klik 'Simpan'."
-            ),
-            _buildExpansionTile(
-              "Lupa kata sandi akun?",
-              "Silakan pergi ke halaman Login dan klik 'Lupa Password' atau hubungi admin jika Anda mengalami kendala akses."
-            ),
+            _buildExpansionTile(context, "How to buy?", "Click Chat Seller and negotiate."),
+            _buildExpansionTile(context, "Is it safe?", "Meet in person (COD) for safety."),
+            _buildExpansionTile(context, "Forgot Password?", "Reset it at login screen."),
             const SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF0A2C6C).withValues(alpha: 0.05),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF0A2C6C).withValues(alpha: 0.1)),
+                border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.headset_mic, size: 48, color: Color(0xFF0A2C6C)),
+                  Icon(Icons.headset_mic, size: 48, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 16),
-                  const Text(
-                    "Masih butuh bantuan?",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  Text(
+                    'still_need_help'.tr,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    "Tim support kami siap membantu Anda 24/7.",
+                  Text(
+                    'support_msg'.tr,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Get.snackbar("Info", "Menghubungkan ke WhatsApp Support...", backgroundColor: Colors.green, colorText: Colors.white);
-                      },
+                      onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0A2C6C),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text("Hubungi Kami"),
+                      child: Text('contact_us'.tr),
                     ),
                   )
                 ],
@@ -98,25 +80,26 @@ class HelpView extends StatelessWidget {
     );
   }
 
-  Widget _buildExpansionTile(String title, String content) {
+  Widget _buildExpansionTile(BuildContext context, String title, String content) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
+      color: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: ExpansionTile(
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
-        iconColor: const Color(0xFF0A2C6C),
+        iconColor: Theme.of(context).colorScheme.primary,
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
           Text(
             content,
-            style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black54),
+            style: const TextStyle(fontSize: 13, height: 1.5),
           ),
         ],
       ),

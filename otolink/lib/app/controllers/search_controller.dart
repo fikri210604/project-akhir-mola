@@ -1,19 +1,15 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/product.dart';
+import '../services/product_service.dart';
 
 class SearchController extends GetxController {
-  final RxList<String> history = <String>[].obs;
-  final RxList<String> liveResults = <String>[].obs;
+  final ProductService _productService = Get.find<ProductService>();
 
-  final List<String> allProducts = const [
-    'Motor CBR',
-    'Mobil Brio',
-    'Vario 160',
-    'NMax',
-    'PCX',
-    'Honda Jazz',
-    'Toyota Avanza',
-  ];
+  final RxList<String> history = <String>[].obs;
+  final RxList<Product> results = <Product>[].obs; 
+  final RxString query = ''.obs;
+  final RxBool isLoading = false.obs;
 
   @override
   void onInit() {
@@ -27,8 +23,8 @@ class SearchController extends GetxController {
     history.assignAll(items);
   }
 
-  Future<void> addHistory(String query) async {
-    final q = query.trim();
+  Future<void> addHistory(String val) async {
+    final q = val.trim();
     if (q.isEmpty) return;
     history.remove(q);
     history.insert(0, q);
@@ -43,14 +39,26 @@ class SearchController extends GetxController {
     await pref.remove('search_history');
   }
 
-  void search(String query) {
-    final q = query.trim();
+  Future<void> search() async {
+    final q = query.value.trim();
     if (q.isEmpty) {
-      liveResults.clear();
+      results.clear();
       return;
     }
-    liveResults.assignAll(
-      allProducts.where((e) => e.toLowerCase().contains(q.toLowerCase())),
-    );
+
+    isLoading.value = true;
+    try {
+      final all = await _productService.getProducts();
+      final filtered = all.where((p) => 
+        p.title.toLowerCase().contains(q.toLowerCase()) || 
+        p.category.name.toLowerCase().contains(q.toLowerCase())
+      ).toList();
+      
+      results.assignAll(filtered);
+    } catch (e) {
+      results.clear();
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

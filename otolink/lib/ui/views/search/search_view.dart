@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../../../app/controllers/search_controller.dart' as app;
+import '../../../app/controllers/search_controller.dart' as ctrl;
+import '../../../app/routes/routes.dart';
+import '../../widgets/ngrok_image.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -11,108 +12,80 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  late final TextEditingController _controller;
-  late final app.SearchController searchCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-    searchCtrl = Get.put(app.SearchController());
-  }
+  final _searchCtrl = Get.find<ctrl.SearchController>();
+  final _textController = TextEditingController();
 
   @override
   void dispose() {
-    _controller.dispose();
+    _textController.dispose();
     super.dispose();
-  }
-
-  void _submit(String value) {
-    searchCtrl.addHistory(value);
-    searchCtrl.search(value);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Get.back(),
+        ),
         title: TextField(
-          controller: _controller,
+          controller: _textController,
           autofocus: true,
           decoration: const InputDecoration(
-            hintText: 'Cari barang, kendaraan, dll...',
+            hintText: "Cari mobil, motor...",
             border: InputBorder.none,
           ),
-          textInputAction: TextInputAction.search,
-          onChanged: searchCtrl.search,
-          onSubmitted: _submit,
+          onChanged: (val) {
+            _searchCtrl.query.value = val;
+            _searchCtrl.search();
+          },
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.clear),
+            icon: const Icon(Icons.close, color: Colors.grey),
             onPressed: () {
-              _controller.clear();
-              searchCtrl.search('');
+              _textController.clear();
+              _searchCtrl.query.value = '';
+              _searchCtrl.results.clear();
             },
-          ),
+          )
         ],
       ),
       body: Obx(() {
-        final hasQuery = _controller.text.trim().isNotEmpty;
-        if (!hasQuery) {
-          final items = searchCtrl.history;
-          if (items.isEmpty) {
-            return const Center(child: Text('Belum ada riwayat pencarian'));
-          }
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Riwayat', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextButton(
-                      onPressed: searchCtrl.clearHistory,
-                      child: const Text('Hapus semua'),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: items
-                      .map((e) => ActionChip(
-                            label: Text(e),
-                            onPressed: () {
-                              _controller.text = e;
-                              _controller.selection = TextSelection.fromPosition(
-                                TextPosition(offset: e.length),
-                              );
-                              searchCtrl.search(e);
-                            },
-                          ))
-                      .toList(),
-                ),
-              ],
-            ),
-          );
+        if (_searchCtrl.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
         }
 
-        final results = searchCtrl.liveResults;
-        if (results.isEmpty) {
-          return const Center(child: Text('Tidak ada hasil'));
+        if (_searchCtrl.query.value.isEmpty) {
+          return const Center(child: Text("Ketik untuk mencari..."));
         }
+
+        if (_searchCtrl.results.isEmpty) {
+          return const Center(child: Text("Tidak ditemukan"));
+        }
+
         return ListView.separated(
-          itemCount: results.length,
+          itemCount: _searchCtrl.results.length,
           separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final item = results[index];
+          itemBuilder: (_, index) {
+            final p = _searchCtrl.results[index];
             return ListTile(
-              title: Text(item),
-              onTap: () => _submit(item),
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  width: 50, height: 50,
+                  child: p.images.isNotEmpty
+                      ? NgrokImage(imageUrl: p.images.first, fit: BoxFit.cover)
+                      : Container(color: Colors.grey[200]),
+                ),
+              ),
+              title: Text(p.title),
+              subtitle: Text("Rp ${p.price.toStringAsFixed(0)}"),
+              onTap: () => Get.toNamed(AppRoutes.product, arguments: p.id),
             );
           },
         );

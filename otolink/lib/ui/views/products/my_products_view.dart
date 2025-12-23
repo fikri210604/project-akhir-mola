@@ -47,7 +47,7 @@ class MyProductsView extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           itemCount: myProducts.length,
           separatorBuilder: (_, __) => const Divider(),
-          itemBuilder: (context, index) {
+          itemBuilder: (_, index) {
             final p = myProducts[index];
             final isSold = p.status == ProductStatus.sold;
 

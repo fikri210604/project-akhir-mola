@@ -11,7 +11,6 @@ class ProfileView extends StatelessWidget {
     final authCtrl = Get.find<AuthController>();
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -27,21 +26,21 @@ class ProfileView extends StatelessWidget {
                     Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF0A2C6C), width: 2),
+                        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                       ),
-                      child: const CircleAvatar(
+                      child: CircleAvatar(
                         radius: 50,
-                        backgroundColor: Colors.white,
-                        backgroundImage: AssetImage('assets/images/logo.png'), 
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        backgroundImage: const AssetImage('assets/images/logo.png'), 
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      user.name.isNotEmpty ? user.name : "Pengguna Otolink",
-                      style: const TextStyle(
+                      user.name.isNotEmpty ? user.name : 'user_default'.tr,
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0A2C6C),
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -60,38 +59,41 @@ class ProfileView extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildMenuItem(
+                      context,
                       icon: Icons.settings_outlined,
-                      title: "Pengaturan Akun",
+                      title: 'account_settings'.tr,
                       onTap: () => Get.toNamed(AppRoutes.settings),
                     ),
                     const SizedBox(height: 12),
                     _buildMenuItem(
+                      context,
                       icon: Icons.help_outline,
-                      title: "Pusat Bantuan",
+                      title: 'help_center'.tr,
                       onTap: () => Get.toNamed(AppRoutes.help),
                     ),
                     const SizedBox(height: 12),
                     _buildMenuItem(
+                      context,
                       icon: Icons.info_outline,
-                      title: "Tentang Aplikasi",
+                      title: 'about_app'.tr,
                       onTap: () {
                         Get.defaultDialog(
-                          title: "Tentang Otolink",
-                          content: const Column(
+                          title: 'about_app'.tr,
+                          content: Column(
                             children: [
-                              Icon(Icons.car_repair, size: 48, color: Color(0xFF0A2C6C)),
-                              SizedBox(height: 12),
-                              Text("Versi 1.0.0", style: TextStyle(color: Colors.grey)),
-                              SizedBox(height: 8),
-                              Text(
-                                "Otolink adalah platform jual beli kendaraan terpercaya.",
+                              Icon(Icons.car_repair, size: 48, color: Theme.of(context).colorScheme.primary),
+                              const SizedBox(height: 12),
+                              const Text("Versi 1.0.0", style: TextStyle(color: Colors.grey)),
+                              const SizedBox(height: 8),
+                              const Text(
+                                "Otolink Platform",
                                 textAlign: TextAlign.center,
                               ),
                             ],
                           ),
                           confirmTextColor: Colors.white,
-                          textConfirm: "Tutup",
-                          buttonColor: const Color(0xFF0A2C6C),
+                          textConfirm: "OK",
+                          buttonColor: Theme.of(context).colorScheme.primary,
                           onConfirm: () => Get.back(),
                         );
                       },
@@ -105,10 +107,10 @@ class ProfileView extends StatelessWidget {
               TextButton.icon(
                 onPressed: () {
                   Get.defaultDialog(
-                    title: "Keluar",
-                    middleText: "Yakin ingin keluar?",
-                    textConfirm: "Ya",
-                    textCancel: "Tidak",
+                    title: 'logout_confirm'.tr,
+                    middleText: 'logout_msg'.tr,
+                    textConfirm: 'yes_logout'.tr,
+                    textCancel: 'cancel'.tr,
                     confirmTextColor: Colors.white,
                     buttonColor: Colors.red,
                     onConfirm: () async {
@@ -118,7 +120,7 @@ class ProfileView extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.logout, color: Colors.red),
-                label: const Text("Keluar", style: TextStyle(color: Colors.red)),
+                label: Text('logout'.tr, style: const TextStyle(color: Colors.red)),
               ),
               
               const SizedBox(height: 20),
@@ -129,13 +131,16 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem({
+  Widget _buildMenuItem(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.grey.shade50,
+      color: Theme.of(context).brightness == Brightness.dark 
+          ? Colors.grey.shade900 
+          : Colors.grey.shade50,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -143,7 +148,7 @@ class ProfileView extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -151,7 +156,7 @@ class ProfileView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -161,7 +166,7 @@ class ProfileView extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Icon(icon, color: const Color(0xFF0A2C6C), size: 20),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -170,7 +175,6 @@ class ProfileView extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
                   ),
                 ),
               ),

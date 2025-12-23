@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/controllers/auth_controller.dart';
 import '../../../app/controllers/ui/login_controller.dart';
-import '../../widgets/input_text_view.dart';
+import '../../widgets/app_text_field.dart';
+import '../../widgets/app_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -29,18 +30,18 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0.8,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0A2C6C)),
+          icon: Icon(Icons.arrow_back_ios_new, color: Theme.of(context).colorScheme.primary),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           "Login",
           style: TextStyle(
-            color: Color(0xFF0A2C6C),
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
@@ -52,12 +53,12 @@ class _LoginPageState extends State<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 10),
-            const Text(
+            Text(
               "Selamat Datang Kembali 👋",
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0A2C6C),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 8),
@@ -71,8 +72,8 @@ class _LoginPageState extends State<LoginPage> {
               label: 'Email/No HP',
               hint: 'Isi dengan email atau No HP Anda',
               keyboardType: TextInputType.emailAddress,
-              labelColor: const Color(0xFF0A2C6C),
-              primaryColor: const Color(0xFF0A2C6C),
+              labelColor: Theme.of(context).colorScheme.primary,
+              primaryColor: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 20),
             AppTextField(
@@ -81,8 +82,8 @@ class _LoginPageState extends State<LoginPage> {
               hint: 'Masukkan Kata Sandi Anda',
               obscure: true,
               enableToggleObscure: true,
-              labelColor: const Color(0xFF0A2C6C),
-              primaryColor: const Color(0xFF0A2C6C),
+              labelColor: Theme.of(context).colorScheme.primary,
+              primaryColor: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 5),
             _buildForgotPassword(),
@@ -90,12 +91,12 @@ class _LoginPageState extends State<LoginPage> {
             AppButton.primary(
               label: 'Masuk',
               onPressed: controller.submitLogin,
-              color: const Color(0xFF0A2C6C),
+              color: Theme.of(context).colorScheme.primary,
               height: 50,
             ),
             const SizedBox(height: 16),
-            Row(
-              children: const [
+            const Row(
+              children: [
                 Expanded(child: Divider()),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -109,21 +110,20 @@ class _LoginPageState extends State<LoginPage> {
               label: 'Masuk dengan Google',
               icon: Icons.g_mobiledata,
               onPressed: controller.signInWithGoogle,
-              color: const Color(0xFF0A2C6C),
+              color: Theme.of(context).colorScheme.primary,
               height: 48,
             ),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Belum punya akun? ",
-                    style: TextStyle(color: Colors.grey)),
+                const Text("Belum punya akun? ", style: TextStyle(color: Colors.grey)),
                 GestureDetector(
                   onTap: () => Get.toNamed('/signup'),
-                  child: const Text(
+                  child: Text(
                     "Daftar Sekarang",
                     style: TextStyle(
-                      color: Color(0xFF0A2C6C),
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -142,18 +142,15 @@ class _LoginPageState extends State<LoginPage> {
       child: TextButton(
         onPressed: () async {
           final email = controller.emailController.text.trim();
-
           if (email.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Isi email untuk reset sandi')),
             );
             return;
           }
-
           try {
             await Get.find<AuthController>().sendPasswordReset(email);
             if (!mounted) return;
-
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Email reset terkirim')),
             );
@@ -163,10 +160,10 @@ class _LoginPageState extends State<LoginPage> {
             );
           }
         },
-        child: const Text(
+        child: Text(
           'Lupa Kata Sandi?',
           style: TextStyle(
-            color: Color(0xFF0A2C6C),
+            color: Theme.of(context).colorScheme.primary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),

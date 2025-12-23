@@ -49,27 +49,27 @@ class _NavigationState extends State<Navigation> {
       body: currentBody,
       floatingActionButton: FloatingActionButton(
         onPressed: () => Get.to(() => const AddProductView()),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 4,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Color(0xFF0A2C6C), size: 32),
+        child: Icon(Icons.add, color: Theme.of(context).colorScheme.primary, size: 32),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
-        color: Colors.white,
+        color: Theme.of(context).bottomAppBarTheme.color ?? Theme.of(context).cardColor,
         elevation: 10,
         child: SizedBox(
           height: 60,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTabItem(0, Icons.home_outlined, Icons.home, "Home"),
-              _buildTabItem(1, Icons.chat_bubble_outline, Icons.chat_bubble, "Chat"),
+              _buildTabItem(0, Icons.home_outlined, Icons.home, 'home'.tr),
+              _buildTabItem(1, Icons.chat_bubble_outline, Icons.chat_bubble, 'chat'.tr),
               const SizedBox(width: 48), 
-              _buildTabItem(3, Icons.favorite_border, Icons.favorite, "Favorite"),
-              _buildTabItem(4, Icons.person_outline, Icons.person, "Akun Saya"),
+              _buildTabItem(3, Icons.favorite_border, Icons.favorite, 'favorites'.tr),
+              _buildTabItem(4, Icons.person_outline, Icons.person, 'my_account'.tr),
             ],
           ),
         ),
@@ -79,6 +79,8 @@ class _NavigationState extends State<Navigation> {
 
   Widget _buildTabItem(int index, IconData icon, IconData activeIcon, String label) {
     final bool isActive = _currentIndex == index;
+    final color = isActive ? Theme.of(context).colorScheme.primary : Colors.grey;
+    
     return InkWell(
       onTap: () => _onItemTapped(index),
       child: Column(
@@ -87,7 +89,7 @@ class _NavigationState extends State<Navigation> {
         children: [
           Icon(
             isActive ? activeIcon : icon,
-            color: isActive ? const Color(0xFF0A2C6C) : Colors.grey,
+            color: color,
             size: 24,
           ),
           const SizedBox(height: 4),
@@ -95,7 +97,7 @@ class _NavigationState extends State<Navigation> {
             label,
             style: TextStyle(
               fontSize: 10,
-              color: isActive ? const Color(0xFF0A2C6C) : Colors.grey,
+              color: color,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
             ),
           )
